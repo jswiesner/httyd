@@ -202,8 +202,9 @@ const BattleEngine = {
             let extra = '';
             if (effectiveness > 1) extra = '\nIt\'s super effective!';
             else if (effectiveness < 1) extra = '\nNot very effective...';
+            const skipEnemyTurn = this.turnOrder === 'enemy_first' || this.enemyDragon.currentHp <= 0;
             this.showText(this.playerDragon.species.name + '\nused ' + moveData.name + '!' + extra,
-                this.turnOrder === 'enemy_first' ? BattlePhase.CHECK : BattlePhase.ENEMY_TURN);
+                skipEnemyTurn ? BattlePhase.CHECK : BattlePhase.ENEMY_TURN);
         } else {
             this.showText(this.playerDragon.species.name + '\nused ' + moveData.name + '\nbut missed!',
                 this.turnOrder === 'enemy_first' ? BattlePhase.CHECK : BattlePhase.ENEMY_TURN);
@@ -236,8 +237,9 @@ const BattleEngine = {
         if (hit) {
             this.playerDragon.currentHp = Math.max(0, this.playerDragon.currentHp - damage);
             GameAudio.sfx.hit();
+            const canPlayerAct = this.pendingPlayerMove && this.playerDragon.currentHp > 0;
             this.showText('Wild ' + this.enemyDragon.species.name + '\nused ' + moveData.name + '!',
-                this.pendingPlayerMove ? BattlePhase.PLAYER_TURN : BattlePhase.CHECK);
+                canPlayerAct ? BattlePhase.PLAYER_TURN : BattlePhase.CHECK);
         } else {
             this.showText('Wild ' + this.enemyDragon.species.name + '\nused ' + moveData.name + '\nbut missed!',
                 this.pendingPlayerMove ? BattlePhase.PLAYER_TURN : BattlePhase.CHECK);
