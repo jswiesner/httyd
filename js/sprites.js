@@ -1,0 +1,764 @@
+// Sprite generation system - all pixel art is drawn programmatically
+const Sprites = {
+    cache: {},
+
+    init() {
+        this.generateFont();
+        this.generatePlayerSprites();
+        this.generateDragonOverworldSprites();
+        this.generateDragonBattleSprites();
+        this.generateNPCSprites();
+        this.generateUISprites();
+    },
+
+    get(name) {
+        return this.cache[name];
+    },
+
+    store(name, canvas) {
+        this.cache[name] = canvas;
+    },
+
+    // --- PIXEL FONT ---
+    fontData: {},
+
+    generateFont() {
+        // 5x7 pixel font for ASCII 32-122
+        const chars = {
+            ' ': '00000.00000.00000.00000.00000.00000.00000',
+            '!': '00100.00100.00100.00100.00100.00000.00100',
+            '?': '01110.10001.00010.00100.00100.00000.00100',
+            '.': '00000.00000.00000.00000.00000.00000.00100',
+            ',': '00000.00000.00000.00000.00000.00010.00100',
+            ':': '00000.00100.00000.00000.00100.00000.00000',
+            '-': '00000.00000.00000.01110.00000.00000.00000',
+            '+': '00000.00100.00100.11111.00100.00100.00000',
+            '/': '00001.00010.00010.00100.01000.01000.10000',
+            '\'': '00100.00100.00000.00000.00000.00000.00000',
+            '"': '01010.01010.00000.00000.00000.00000.00000',
+            '(': '00010.00100.01000.01000.01000.00100.00010',
+            ')': '01000.00100.00010.00010.00010.00100.01000',
+            'A': '01110.10001.10001.11111.10001.10001.10001',
+            'B': '11110.10001.10001.11110.10001.10001.11110',
+            'C': '01110.10001.10000.10000.10000.10001.01110',
+            'D': '11110.10001.10001.10001.10001.10001.11110',
+            'E': '11111.10000.10000.11110.10000.10000.11111',
+            'F': '11111.10000.10000.11110.10000.10000.10000',
+            'G': '01110.10001.10000.10111.10001.10001.01111',
+            'H': '10001.10001.10001.11111.10001.10001.10001',
+            'I': '01110.00100.00100.00100.00100.00100.01110',
+            'J': '00111.00010.00010.00010.00010.10010.01100',
+            'K': '10001.10010.10100.11000.10100.10010.10001',
+            'L': '10000.10000.10000.10000.10000.10000.11111',
+            'M': '10001.11011.10101.10101.10001.10001.10001',
+            'N': '10001.10001.11001.10101.10011.10001.10001',
+            'O': '01110.10001.10001.10001.10001.10001.01110',
+            'P': '11110.10001.10001.11110.10000.10000.10000',
+            'Q': '01110.10001.10001.10001.10101.10010.01101',
+            'R': '11110.10001.10001.11110.10100.10010.10001',
+            'S': '01111.10000.10000.01110.00001.00001.11110',
+            'T': '11111.00100.00100.00100.00100.00100.00100',
+            'U': '10001.10001.10001.10001.10001.10001.01110',
+            'V': '10001.10001.10001.10001.01010.01010.00100',
+            'W': '10001.10001.10001.10101.10101.10101.01010',
+            'X': '10001.10001.01010.00100.01010.10001.10001',
+            'Y': '10001.10001.01010.00100.00100.00100.00100',
+            'Z': '11111.00001.00010.00100.01000.10000.11111',
+            '0': '01110.10011.10101.10101.10101.11001.01110',
+            '1': '00100.01100.00100.00100.00100.00100.01110',
+            '2': '01110.10001.00001.00110.01000.10000.11111',
+            '3': '01110.10001.00001.00110.00001.10001.01110',
+            '4': '00010.00110.01010.10010.11111.00010.00010',
+            '5': '11111.10000.11110.00001.00001.10001.01110',
+            '6': '01110.10000.10000.11110.10001.10001.01110',
+            '7': '11111.00001.00010.00100.01000.01000.01000',
+            '8': '01110.10001.10001.01110.10001.10001.01110',
+            '9': '01110.10001.10001.01111.00001.00001.01110',
+        };
+        // Add lowercase as copies of uppercase
+        for (let c = 97; c <= 122; c++) {
+            const upper = String.fromCharCode(c - 32);
+            if (chars[upper]) {
+                chars[String.fromCharCode(c)] = chars[upper];
+            }
+        }
+        this.fontData = {};
+        for (const [ch, data] of Object.entries(chars)) {
+            const rows = data.split('.');
+            const bitmap = [];
+            for (const row of rows) {
+                for (const pixel of row) {
+                    bitmap.push(pixel === '1' ? 1 : 0);
+                }
+            }
+            this.fontData[ch] = { w: 5, h: 7, data: bitmap };
+        }
+    },
+
+    drawText(ctx, text, x, y, color, scale) {
+        color = color || COLORS.WHITE;
+        scale = scale || 1;
+        let cx = x;
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '\n') {
+                cx = x;
+                y += (7 + 2) * scale;
+                continue;
+            }
+            const glyph = this.fontData[ch];
+            if (glyph) {
+                ctx.fillStyle = color;
+                for (let py = 0; py < glyph.h; py++) {
+                    for (let px = 0; px < glyph.w; px++) {
+                        if (glyph.data[py * glyph.w + px]) {
+                            ctx.fillRect(cx + px * scale, y + py * scale, scale, scale);
+                        }
+                    }
+                }
+            }
+            cx += 6 * scale;
+        }
+    },
+
+    textWidth(text, scale) {
+        scale = scale || 1;
+        return text.length * 6 * scale;
+    },
+
+    // --- PLAYER SPRITES (16x16, 4 directions, 2 frames each) ---
+    generatePlayerSprites() {
+        const P = { // palette
+            '.': null,
+            'h': '#8a6e3e',  // hair/helmet
+            'H': '#6e4e2a',  // helmet dark
+            'S': '#c8a86e',  // skin
+            'T': '#3a6e3e',  // tunic
+            't': '#2a5e2a',  // tunic dark
+            'B': '#5a3a1a',  // belt
+            'P': '#4a3a2a',  // pants
+            'p': '#3a2a1a',  // boots
+        };
+
+        const frames = {
+            down: [
+                // Frame 0
+                '......hHh...' +
+                '.....HhhhH..' +
+                '.....SSSSS..' +
+                '.....SSSSS..' +
+                '....tTTTTt..' +
+                '....TTTTTT..' +
+                '....TBTBTT..' +
+                '....TTTTTT..' +
+                '.....PPPP...' +
+                '.....PPPP...' +
+                '.....P..P...' +
+                '.....pp.pp..',
+                // Frame 1
+                '......hHh...' +
+                '.....HhhhH..' +
+                '.....SSSSS..' +
+                '.....SSSSS..' +
+                '....tTTTTt..' +
+                '....TTTTTT..' +
+                '....TBTBTT..' +
+                '....TTTTTT..' +
+                '.....PPPP...' +
+                '....PP.PP...' +
+                '....P...P...' +
+                '....pp..pp..',
+            ],
+            up: [
+                '......hHh...' +
+                '.....HhhhH..' +
+                '.....hhhhh..' +
+                '.....hhhhh..' +
+                '....tTTTTt..' +
+                '....TTTTTT..' +
+                '....TTTTTT..' +
+                '....TTTTTT..' +
+                '.....PPPP...' +
+                '.....PPPP...' +
+                '.....P..P...' +
+                '.....pp.pp..',
+                '......hHh...' +
+                '.....HhhhH..' +
+                '.....hhhhh..' +
+                '.....hhhhh..' +
+                '....tTTTTt..' +
+                '....TTTTTT..' +
+                '....TTTTTT..' +
+                '....TTTTTT..' +
+                '.....PPPP...' +
+                '....PP.PP...' +
+                '....P...P...' +
+                '....pp..pp..',
+            ],
+            left: [
+                '.....hHh....' +
+                '....Hhhh....' +
+                '....SSSS....' +
+                '....SSSS....' +
+                '...tTTTt....' +
+                '...TTTTT....' +
+                '...TBTTT....' +
+                '...TTTTT....' +
+                '....PPP.....' +
+                '....PPP.....' +
+                '....P.P.....' +
+                '....p.pp....',
+                '.....hHh....' +
+                '....Hhhh....' +
+                '....SSSS....' +
+                '....SSSS....' +
+                '...tTTTt....' +
+                '...TTTTT....' +
+                '...TBTTT....' +
+                '...TTTTT....' +
+                '....PPP.....' +
+                '...PP.P.....' +
+                '...P..P.....' +
+                '...pp.pp....',
+            ],
+            right: [
+                '....hHh.....' +
+                '....hhhH....' +
+                '....SSSS....' +
+                '....SSSS....' +
+                '....tTTTt...' +
+                '....TTTTT...' +
+                '....TTTBT...' +
+                '....TTTTT...' +
+                '.....PPP....' +
+                '.....PPP....' +
+                '.....P.P....' +
+                '....pp.p....',
+                '....hHh.....' +
+                '....hhhH....' +
+                '....SSSS....' +
+                '....SSSS....' +
+                '....tTTTt...' +
+                '....TTTTT...' +
+                '....TTTBT...' +
+                '....TTTTT...' +
+                '.....PPP....' +
+                '.....P.PP...' +
+                '.....P..P...' +
+                '....pp.pp...',
+            ],
+        };
+
+        for (const [dir, framePair] of Object.entries(frames)) {
+            for (let f = 0; f < 2; f++) {
+                const canvas = createCanvas(12, 12);
+                const ctx = canvas.getContext('2d');
+                const data = framePair[f];
+                for (let y = 0; y < 12; y++) {
+                    for (let x = 0; x < 12; x++) {
+                        const ch = data[y * 12 + x];
+                        if (ch !== '.' && P[ch]) {
+                            ctx.fillStyle = P[ch];
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+                // Scale to 16x16
+                const scaled = createCanvas(16, 16);
+                const sctx = scaled.getContext('2d');
+                sctx.imageSmoothingEnabled = false;
+                // Center the 12x12 sprite in 16x16
+                sctx.drawImage(canvas, 2, 2, 12, 12);
+                this.store('player_' + dir + '_' + f, scaled);
+            }
+        }
+    },
+
+    // --- DRAGON OVERWORLD SPRITES (16x16) ---
+    generateDragonOverworldSprites() {
+        const dragonDesigns = {
+            terrible_terror: {
+                color: '#d85030',
+                dark: '#a83020',
+                light: '#f87050',
+                design: [
+                    '................',
+                    '......cc........',
+                    '.....cCC........',
+                    '....cCCCc.......',
+                    '....CCCC........',
+                    '...cCCCCc.......',
+                    '...CCCCCC.......',
+                    '...cCCCCc.......',
+                    '....cCCc........',
+                    '....c..c........',
+                    '................',
+                    '................',
+                ]
+            },
+            gronckle: {
+                color: '#7a8a5a',
+                dark: '#5a6a3a',
+                light: '#9aaa7a',
+                design: [
+                    '................',
+                    '....cccc........',
+                    '...cCCCCc.......',
+                    '..cCCCCCCc......',
+                    '..CCCCCCCc......',
+                    '..cCCCCCCc......',
+                    '..cCCCCCc.......',
+                    '...cCCCc........',
+                    '...cc.cc........',
+                    '...c...c........',
+                    '................',
+                    '................',
+                ]
+            },
+            deadly_nadder: {
+                color: '#3a9ae8',
+                dark: '#2a6ab8',
+                light: '#5abaff',
+                design: [
+                    '................',
+                    '......Lc........',
+                    '.....cCCc.......',
+                    '....cCCCc.......',
+                    '...LCCCCc.......',
+                    '....CCCCCc......',
+                    '....cCCCCc......',
+                    '.....cCCc.......',
+                    '.....cCc........',
+                    '.....c.c........',
+                    '................',
+                    '................',
+                ]
+            },
+            monstrous_nightmare: {
+                color: '#d83030',
+                dark: '#a82020',
+                light: '#f85050',
+                design: [
+                    '................',
+                    '.....LLc........',
+                    '....cCCCc.......',
+                    '...cCCCCCc......',
+                    '...LCCCCCc......',
+                    '...CCCCCCCc.....',
+                    '....CCCCCCc.....',
+                    '....cCCCCc......',
+                    '.....cCCc.......',
+                    '.....c..c.......',
+                    '................',
+                    '................',
+                ]
+            },
+            hideous_zippleback: {
+                color: '#4a8a4a',
+                dark: '#2a6a2a',
+                light: '#6aaa6a',
+                design: [
+                    '................',
+                    '....cc..cc......',
+                    '...cCCccCCc.....',
+                    '...cCCCCCCc.....',
+                    '....CCCCCC......',
+                    '....cCCCCc......',
+                    '....cCCCCc......',
+                    '.....cCCc.......',
+                    '.....c..c.......',
+                    '.....c..c.......',
+                    '................',
+                    '................',
+                ]
+            },
+            razorwhip: {
+                color: '#b0b0c0',
+                dark: '#808098',
+                light: '#d0d0e0',
+                design: [
+                    '................',
+                    '.....cc.........',
+                    '....cCCc........',
+                    '...cCCCCc.......',
+                    '...LCCCCc.......',
+                    '...cCCCCCL......',
+                    '....cCCCc.......',
+                    '....cCCc........',
+                    '.....cCcL.......',
+                    '.....c.c........',
+                    '................',
+                    '................',
+                ]
+            },
+            fireworm: {
+                color: '#e88830',
+                dark: '#c86820',
+                light: '#ffaa50',
+                design: [
+                    '................',
+                    '......cc........',
+                    '.....LCCC.......',
+                    '....cCCCCc......',
+                    '....cCCCCL......',
+                    '....LCCCCc......',
+                    '.....cCCc.......',
+                    '......cc........',
+                    '......cc........',
+                    '.....c..c.......',
+                    '................',
+                    '................',
+                ]
+            },
+            stormcutter: {
+                color: '#8a5a3a',
+                dark: '#6a3a2a',
+                light: '#aa7a5a',
+                design: [
+                    '................',
+                    '.....ccc........',
+                    '....cCCCc.......',
+                    '...LCCCCCc......',
+                    '..LCCCCCCCc.....',
+                    '...cCCCCCCL.....',
+                    '....CCCCCc......',
+                    '....cCCCc.......',
+                    '.....cCc........',
+                    '.....c.c........',
+                    '................',
+                    '................',
+                ]
+            },
+            light_fury: {
+                color: '#e0e0f0',
+                dark: '#b0b0d0',
+                light: '#ffffff',
+                design: [
+                    '................',
+                    '......cc........',
+                    '.....cCCc.......',
+                    '....cCCCCc......',
+                    '...LCCCCCc......',
+                    '....cCCCCCL.....',
+                    '....cCCCCc......',
+                    '.....cCCc.......',
+                    '.....c.c........',
+                    '.....c.c........',
+                    '................',
+                    '................',
+                ]
+            },
+            night_fury: {
+                color: '#2a2a3a',
+                dark: '#1a1a2a',
+                light: '#4a4a5a',
+                design: [
+                    '................',
+                    '.....Lcc........',
+                    '....cCCCc.......',
+                    '...cCCCCCc......',
+                    '..LCCCCCCc......',
+                    '...cCCCCCCL.....',
+                    '....cCCCCc......',
+                    '.....cCCc.......',
+                    '.....c.c........',
+                    '.....c.c........',
+                    '................',
+                    '................',
+                ]
+            },
+        };
+
+        for (const [id, dragon] of Object.entries(dragonDesigns)) {
+            const palette = {
+                '.': null,
+                'c': dragon.dark,
+                'C': dragon.color,
+                'L': dragon.light,
+            };
+            // Generate for all 4 directions (simplified: same sprite, slightly shifted)
+            for (const dir of ['down', 'up', 'left', 'right']) {
+                for (let f = 0; f < 2; f++) {
+                    const canvas = createCanvas(16, 16);
+                    const ctx = canvas.getContext('2d');
+                    const design = dragon.design;
+                    const offsetY = f === 1 ? 1 : 0;
+                    for (let y = 0; y < design.length; y++) {
+                        for (let x = 0; x < 16; x++) {
+                            const ch = design[y][x];
+                            if (palette[ch]) {
+                                ctx.fillStyle = palette[ch];
+                                let dx = 0;
+                                if (dir === 'left') dx = -1;
+                                if (dir === 'right') dx = 1;
+                                ctx.fillRect(x + dx, y + 2 + offsetY, 1, 1);
+                            }
+                        }
+                    }
+                    this.store(id + '_' + dir + '_' + f, canvas);
+                }
+            }
+        }
+    },
+
+    // --- DRAGON BATTLE SPRITES (48x48 front, 32x32 back) ---
+    generateDragonBattleSprites() {
+        const battleDesigns = {
+            terrible_terror: { color: '#d85030', dark: '#a83020', light: '#f87050', eye: '#ffee00' },
+            gronckle: { color: '#7a8a5a', dark: '#5a6a3a', light: '#9aaa7a', eye: '#ffee00' },
+            deadly_nadder: { color: '#3a9ae8', dark: '#2a6ab8', light: '#5abaff', eye: '#ffee00' },
+            monstrous_nightmare: { color: '#d83030', dark: '#a82020', light: '#f85050', eye: '#ffee00' },
+            hideous_zippleback: { color: '#4a8a4a', dark: '#2a6a2a', light: '#6aaa6a', eye: '#ffee00' },
+            razorwhip: { color: '#b0b0c0', dark: '#808098', light: '#d0d0e0', eye: '#ffee00' },
+            fireworm: { color: '#e88830', dark: '#c86820', light: '#ffaa50', eye: '#ffee00' },
+            stormcutter: { color: '#8a5a3a', dark: '#6a3a2a', light: '#aa7a5a', eye: '#ffee00' },
+            light_fury: { color: '#e0e0f0', dark: '#b0b0d0', light: '#ffffff', eye: '#88ccff' },
+            night_fury: { color: '#2a2a3a', dark: '#1a1a2a', light: '#4a4a5a', eye: '#88ff88' },
+        };
+
+        for (const [id, d] of Object.entries(battleDesigns)) {
+            // Front sprite (enemy) - 48x48
+            const front = createCanvas(48, 48);
+            const fctx = front.getContext('2d');
+            this._drawDragonBattle(fctx, d, 48, false, id);
+            this.store(id + '_front', front);
+
+            // Back sprite (player's dragon) - 48x48
+            const back = createCanvas(48, 48);
+            const bctx = back.getContext('2d');
+            this._drawDragonBattle(bctx, d, 48, true, id);
+            this.store(id + '_back', back);
+        }
+    },
+
+    _drawDragonBattle(ctx, d, size, isBack, speciesId) {
+        const cx = size / 2;
+        const cy = size / 2;
+
+        // Body
+        ctx.fillStyle = d.color;
+        this._fillEllipse(ctx, cx, cy + 4, 16, 12);
+
+        // Head
+        ctx.fillStyle = d.color;
+        const headY = cy - 10;
+        this._fillEllipse(ctx, cx, headY, 10, 8);
+
+        // Darker underbelly
+        ctx.fillStyle = d.dark;
+        this._fillEllipse(ctx, cx, cy + 8, 12, 6);
+
+        // Wings
+        ctx.fillStyle = d.light;
+        if (!isBack) {
+            // Left wing
+            ctx.beginPath();
+            ctx.moveTo(cx - 14, cy);
+            ctx.lineTo(cx - 22, cy - 14);
+            ctx.lineTo(cx - 8, cy - 4);
+            ctx.fill();
+            // Right wing
+            ctx.beginPath();
+            ctx.moveTo(cx + 14, cy);
+            ctx.lineTo(cx + 22, cy - 14);
+            ctx.lineTo(cx + 8, cy - 4);
+            ctx.fill();
+        } else {
+            // Wings from behind - spread wider
+            ctx.beginPath();
+            ctx.moveTo(cx - 12, cy + 2);
+            ctx.lineTo(cx - 20, cy - 12);
+            ctx.lineTo(cx - 6, cy - 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx + 12, cy + 2);
+            ctx.lineTo(cx + 20, cy - 12);
+            ctx.lineTo(cx + 6, cy - 2);
+            ctx.fill();
+        }
+
+        // Legs
+        ctx.fillStyle = d.dark;
+        ctx.fillRect(cx - 8, cy + 12, 4, 6);
+        ctx.fillRect(cx + 4, cy + 12, 4, 6);
+
+        // Tail
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.moveTo(cx + 12, cy + 8);
+        ctx.lineTo(cx + 20, cy + 14);
+        ctx.lineTo(cx + 14, cy + 12);
+        ctx.fill();
+
+        if (!isBack) {
+            // Eyes
+            ctx.fillStyle = d.eye;
+            ctx.fillRect(cx - 5, headY - 2, 3, 3);
+            ctx.fillRect(cx + 2, headY - 2, 3, 3);
+            // Pupils
+            ctx.fillStyle = '#000';
+            ctx.fillRect(cx - 4, headY - 1, 1, 2);
+            ctx.fillRect(cx + 3, headY - 1, 1, 2);
+
+            // Nostrils
+            ctx.fillStyle = d.dark;
+            ctx.fillRect(cx - 2, headY + 3, 1, 1);
+            ctx.fillRect(cx + 1, headY + 3, 1, 1);
+        }
+
+        // Species-specific details
+        if (speciesId === 'deadly_nadder') {
+            // Head crest spikes
+            ctx.fillStyle = d.light;
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(cx - 2 + i * 3, headY - 8 + i, 2, 4);
+            }
+        } else if (speciesId === 'monstrous_nightmare') {
+            // Horns
+            ctx.fillStyle = d.dark;
+            ctx.fillRect(cx - 6, headY - 6, 2, 5);
+            ctx.fillRect(cx + 4, headY - 6, 2, 5);
+        } else if (speciesId === 'night_fury' || speciesId === 'light_fury') {
+            // Ear flaps
+            ctx.fillStyle = d.light;
+            ctx.fillRect(cx - 8, headY - 4, 3, 3);
+            ctx.fillRect(cx + 5, headY - 4, 3, 3);
+        } else if (speciesId === 'stormcutter') {
+            // Four wings (extra pair)
+            ctx.fillStyle = d.color;
+            ctx.beginPath();
+            ctx.moveTo(cx - 10, cy + 4);
+            ctx.lineTo(cx - 16, cy - 6);
+            ctx.lineTo(cx - 6, cy);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx + 10, cy + 4);
+            ctx.lineTo(cx + 16, cy - 6);
+            ctx.lineTo(cx + 6, cy);
+            ctx.fill();
+        } else if (speciesId === 'hideous_zippleback') {
+            // Two heads
+            ctx.fillStyle = d.color;
+            this._fillEllipse(ctx, cx - 6, headY, 7, 6);
+            this._fillEllipse(ctx, cx + 6, headY, 7, 6);
+            if (!isBack) {
+                ctx.fillStyle = d.eye;
+                ctx.fillRect(cx - 8, headY - 2, 2, 2);
+                ctx.fillRect(cx + 6, headY - 2, 2, 2);
+            }
+        } else if (speciesId === 'gronckle') {
+            // Bumpy texture
+            ctx.fillStyle = d.dark;
+            for (let i = 0; i < 5; i++) {
+                const bx = cx - 10 + Math.floor(i * 5);
+                const by = cy + Math.floor(Math.sin(i) * 4);
+                ctx.fillRect(bx, by, 2, 2);
+            }
+        } else if (speciesId === 'fireworm') {
+            // Glowing spots
+            ctx.fillStyle = '#ffaa00';
+            for (let i = 0; i < 4; i++) {
+                const bx = cx - 8 + i * 5;
+                const by = cy + 2 + (i % 2) * 4;
+                ctx.fillRect(bx, by, 2, 2);
+            }
+        } else if (speciesId === 'razorwhip') {
+            // Sharp tail blade
+            ctx.fillStyle = d.light;
+            ctx.beginPath();
+            ctx.moveTo(cx + 18, cy + 12);
+            ctx.lineTo(cx + 24, cy + 10);
+            ctx.lineTo(cx + 24, cy + 16);
+            ctx.fill();
+        }
+    },
+
+    _fillEllipse(ctx, cx, cy, rx, ry) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+    },
+
+    // --- NPC SPRITES ---
+    generateNPCSprites() {
+        const npcDesigns = {
+            npc_chief: {
+                P: { '.': null, 'h': '#c88830', 'H': '#a86820', 'S': '#deb887', 'A': '#8b0000', 'a': '#6b0000', 'B': '#4a3a2a', 'P': '#5a4a3a', 'p': '#3a2a1a', 'b': '#c0c0c0' },
+            },
+            npc_healer: {
+                P: { '.': null, 'h': '#e8e8e8', 'H': '#c0c0c0', 'S': '#deb887', 'A': '#4a8a4a', 'a': '#3a6a3a', 'B': '#8a6e3e', 'P': '#5a5a3a', 'p': '#3a3a2a', 'b': null },
+            },
+            npc_trader: {
+                P: { '.': null, 'h': '#4a3a2a', 'H': '#3a2a1a', 'S': '#deb887', 'A': '#8a5a2a', 'a': '#6a4a1a', 'B': '#c0a040', 'P': '#5a4a3a', 'p': '#3a2a1a', 'b': null },
+            },
+            npc_elder: {
+                P: { '.': null, 'h': '#c0c0c0', 'H': '#a0a0a0', 'S': '#deb887', 'A': '#5a3a8a', 'a': '#4a2a6a', 'B': '#8a6e3e', 'P': '#5a4a3a', 'p': '#3a2a1a', 'b': null },
+            },
+            npc_guide: {
+                P: { '.': null, 'h': '#c88830', 'H': '#a86820', 'S': '#deb887', 'A': '#2a5a8a', 'a': '#1a4a6a', 'B': '#8a6e3e', 'P': '#4a4a4a', 'p': '#2a2a2a', 'b': null },
+            },
+        };
+
+        const baseSprite =
+            '......hHh...' +
+            '.....HhhhH..' +
+            '.....SSSSS..' +
+            '.....SSSSS..' +
+            '....aAAAAa..' +
+            '....AAAAAA..' +
+            '....ABABAA..' +
+            '....AAAAAA..' +
+            '.....PPPP...' +
+            '.....PPPP...' +
+            '.....P..P...' +
+            '.....pp.pp..';
+
+        for (const [id, npc] of Object.entries(npcDesigns)) {
+            const canvas = createCanvas(16, 16);
+            const ctx = canvas.getContext('2d');
+            for (let y = 0; y < 12; y++) {
+                for (let x = 0; x < 12; x++) {
+                    const ch = baseSprite[y * 12 + x];
+                    if (ch !== '.' && npc.P[ch]) {
+                        ctx.fillStyle = npc.P[ch];
+                        ctx.fillRect(x + 2, y + 2, 1, 1);
+                    }
+                }
+            }
+            this.store(id + '_down_0', canvas);
+            this.store(id + '_down_1', canvas);
+            this.store(id + '_up_0', canvas);
+            this.store(id + '_up_1', canvas);
+            this.store(id + '_left_0', canvas);
+            this.store(id + '_left_1', canvas);
+            this.store(id + '_right_0', canvas);
+            this.store(id + '_right_1', canvas);
+        }
+    },
+
+    // --- UI SPRITES ---
+    generateUISprites() {
+        // Battle cursor arrow
+        const arrow = createCanvas(8, 8);
+        const actx = arrow.getContext('2d');
+        actx.fillStyle = COLORS.WHITE;
+        actx.fillRect(2, 1, 1, 5);
+        actx.fillRect(3, 2, 1, 3);
+        actx.fillRect(4, 3, 1, 1);
+        this.store('cursor', arrow);
+
+        // Dragon type icons (8x8)
+        const typeColors = { fire: COLORS.FIRE, ice: COLORS.ICE, lightning: COLORS.LIGHTNING, earth: COLORS.EARTH };
+        for (const [type, color] of Object.entries(typeColors)) {
+            const icon = createCanvas(8, 8);
+            const ictx = icon.getContext('2d');
+            ictx.fillStyle = color;
+            ictx.beginPath();
+            ictx.arc(4, 4, 3, 0, Math.PI * 2);
+            ictx.fill();
+            ictx.fillStyle = COLORS.WHITE;
+            ictx.fillRect(3, 3, 2, 2);
+            this.store('type_' + type, icon);
+        }
+    }
+};
