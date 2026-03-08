@@ -84,13 +84,19 @@ const Game = {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, SCREEN_W, SCREEN_H);
 
+        // During transitions, render the underlying content so it fades properly
+        let renderState = this.state;
+        if (this.state === GameState.TRANSITION) {
+            renderState = this.transitionNextState || this.transitionPrevState || GameState.TITLE;
+        }
+
         // Always render the base layer first
-        const baseState = this.stateStack.length > 0 ? this.stateStack[0] : this.state;
-        if (baseState === GameState.OVERWORLD || this.state === GameState.DIALOGUE || this.state === GameState.MENU) {
+        const baseState = this.stateStack.length > 0 ? this.stateStack[0] : renderState;
+        if (baseState === GameState.OVERWORLD || renderState === GameState.DIALOGUE || renderState === GameState.MENU) {
             this.renderOverworld(ctx);
         }
 
-        switch (this.state) {
+        switch (renderState) {
             case GameState.TITLE:
                 this.renderTitle(ctx);
                 break;

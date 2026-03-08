@@ -250,7 +250,6 @@ const BattleEngine = {
             // Enemy went first, player goes next
             this.turnOrder = 'enemy_first';
         }
-        this.pendingPlayerMove = null;
     },
 
     calcDamage(attacker, defender, move) {
@@ -396,9 +395,10 @@ const BattleEngine = {
             }
 
             if (aliveIdx >= 0) {
+                const faintedName = this.playerDragon.species.name;
                 this.playerDragonIndex = aliveIdx;
                 this.playerDragon = Game.player.party[aliveIdx];
-                this.showText(Game.player.party[this.playerDragonIndex === 0 ? 0 : 1].species.name + ' fainted!\nGo, ' + this.playerDragon.species.name + '!', BattlePhase.MENU);
+                this.showText(faintedName + ' fainted!\nGo, ' + this.playerDragon.species.name + '!', BattlePhase.MENU);
             } else {
                 GameAudio.sfx.defeat();
                 this.showText('All your dragons\nhave fainted!', BattlePhase.DEFEAT);
@@ -419,9 +419,9 @@ const BattleEngine = {
 
     updateDefeat() {
         if (Input.confirm()) {
-            // Heal and return to berk
+            // Heal and return to berk in a single transition
             Game.player.healAll();
-            this.endBattle();
+            Game.stateStack.pop(); // discard the stacked overworld state
             Game.warpTo('berk_village', 14, 10);
         }
     },
