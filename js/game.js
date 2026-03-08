@@ -14,6 +14,7 @@ const Game = {
     transitionAlpha: 0,
     transitionDir: 0, // 1 = fading out, -1 = fading in
     transitionCallback: null,
+    transitionNextState: null,
     hasSave: false,
 
     init() {
@@ -335,12 +336,20 @@ const Game = {
                 this.transitionCallback();
                 this.transitionCallback = null;
             }
+            // Callback may have changed state; restore TRANSITION for fade-out
+            this.transitionNextState = this.state;
+            this.state = GameState.TRANSITION;
             this.transitionDir = -1;
         }
 
         if (this.transitionDir === -1 && this.transitionAlpha <= 0) {
             this.transitionAlpha = 0;
             this.transitionDir = 0;
+            // Apply the state the callback set
+            if (this.transitionNextState) {
+                this.state = this.transitionNextState;
+                this.transitionNextState = null;
+            }
         }
     },
 
