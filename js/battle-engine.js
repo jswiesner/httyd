@@ -189,6 +189,7 @@ const BattleEngine = {
 
     executePlayerTurn() {
         const move = this.pendingPlayerMove;
+        this.pendingPlayerMove = null;
         move.currentPp--;
         const moveData = MOVES[move.id];
         const damage = this.calcDamage(this.playerDragon, this.enemyDragon, moveData);
