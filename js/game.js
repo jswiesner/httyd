@@ -15,6 +15,7 @@ const Game = {
     transitionDir: 0, // 1 = fading out, -1 = fading in
     transitionCallback: null,
     transitionNextState: null,
+    transitionPrevState: null,
     hasSave: false,
 
     init() {
@@ -324,6 +325,7 @@ const Game = {
         this.transitionDir = 1;
         this.transitionAlpha = 0;
         this.transitionCallback = callback;
+        this.transitionPrevState = this.state;
         this.state = GameState.TRANSITION;
     },
 
@@ -333,6 +335,8 @@ const Game = {
         if (this.transitionDir === 1 && this.transitionAlpha >= 1) {
             this.transitionAlpha = 1;
             if (this.transitionCallback) {
+                // Restore pre-transition state so pushState/popState see the right value
+                this.state = this.transitionPrevState;
                 this.transitionCallback();
                 this.transitionCallback = null;
             }
