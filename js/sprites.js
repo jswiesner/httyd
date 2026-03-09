@@ -870,7 +870,6 @@ const Sprites = {
             ctx.fillRect(cx + 2, headY - 5, 2, 3);
         }
     },
-    },
 
     _fillEllipse(ctx, cx, cy, rx, ry) {
         ctx.beginPath();
