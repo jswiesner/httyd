@@ -7,15 +7,39 @@ const BattleRenderer = {
     render(ctx) {
         const be = BattleEngine;
 
-        // Background
-        ctx.fillStyle = '#d0d8e0';
-        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        // Sky gradient
+        const skyColors = ['#c8d8e8', '#d0dce8', '#d8e0e8', '#dce4ec', '#e0e8f0'];
+        for (let i = 0; i < skyColors.length; i++) {
+            ctx.fillStyle = skyColors[i];
+            ctx.fillRect(0, i * 14, SCREEN_W, 14);
+        }
 
-        // Ground line
-        ctx.fillStyle = '#a0b0a0';
+        // Distant mountains
+        ctx.fillStyle = '#98a8b8';
+        ctx.beginPath();
+        ctx.moveTo(0, 60);
+        ctx.lineTo(20, 45);
+        ctx.lineTo(45, 55);
+        ctx.lineTo(70, 40);
+        ctx.lineTo(95, 52);
+        ctx.lineTo(120, 42);
+        ctx.lineTo(145, 50);
+        ctx.lineTo(SCREEN_W, 55);
+        ctx.lineTo(SCREEN_W, 70);
+        ctx.lineTo(0, 70);
+        ctx.fill();
+
+        // Ground with grass texture
+        ctx.fillStyle = '#8aaa78';
         ctx.fillRect(0, 70, SCREEN_W, 30);
-        ctx.fillStyle = '#90a090';
+        ctx.fillStyle = '#7a9a68';
         ctx.fillRect(0, 70, SCREEN_W, 2);
+        // Grass detail
+        ctx.fillStyle = '#9aba88';
+        for (let x = 0; x < SCREEN_W; x += 6) {
+            ctx.fillRect(x, 72 + (x % 3), 2, 1);
+            ctx.fillRect(x + 3, 78 + (x % 4), 1, 1);
+        }
 
         // Enemy dragon (top-right area)
         if (be.enemyDragon) {

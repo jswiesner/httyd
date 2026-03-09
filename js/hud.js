@@ -53,6 +53,80 @@ const HUD = {
             Sprites.drawText(ctx, this._areaName, tx, 23, COLORS.TEXT);
             ctx.globalAlpha = 1;
         }
+
+        // Exit indicators - show arrows near warp points at screen edges
+        this._renderExitIndicators(ctx, player);
+    },
+
+    _renderExitIndicators(ctx, player) {
+        const map = Game.currentMap;
+        if (!map || !map.warps) return;
+        const cam = Game.camera;
+        if (!cam) return;
+
+        const blink = Math.floor(Date.now() / 600) % 2;
+
+        for (const warp of map.warps) {
+            const screenX = Math.round(warp.x * TILE_SIZE - cam.x);
+            const screenY = Math.round(warp.y * TILE_SIZE - cam.y);
+
+            // Only show if near screen edges and visible
+            if (screenX < -16 || screenX > SCREEN_W + 16 || screenY < -16 || screenY > SCREEN_H + 16) continue;
+
+            // Determine direction of exit based on position at map edge
+            let arrowDir = null;
+            let ax, ay;
+            if (warp.x === 0) {
+                arrowDir = 'left';
+                ax = screenX - 2;
+                ay = screenY + 4;
+            } else if (warp.x >= map.width - 1) {
+                arrowDir = 'right';
+                ax = screenX + 12;
+                ay = screenY + 4;
+            } else if (warp.y === 0) {
+                arrowDir = 'up';
+                ax = screenX + 4;
+                ay = screenY - 2;
+            } else if (warp.y >= map.height - 1) {
+                arrowDir = 'down';
+                ax = screenX + 4;
+                ay = screenY + 12;
+            }
+
+            if (!arrowDir) continue;
+
+            // Pulsing arrow
+            ctx.globalAlpha = blink ? 0.9 : 0.5;
+            ctx.fillStyle = '#ffe850';
+
+            if (arrowDir === 'left') {
+                ctx.beginPath();
+                ctx.moveTo(ax, ay + 4);
+                ctx.lineTo(ax + 6, ay);
+                ctx.lineTo(ax + 6, ay + 8);
+                ctx.fill();
+            } else if (arrowDir === 'right') {
+                ctx.beginPath();
+                ctx.moveTo(ax + 6, ay + 4);
+                ctx.lineTo(ax, ay);
+                ctx.lineTo(ax, ay + 8);
+                ctx.fill();
+            } else if (arrowDir === 'up') {
+                ctx.beginPath();
+                ctx.moveTo(ax + 4, ay);
+                ctx.lineTo(ax, ay + 6);
+                ctx.lineTo(ax + 8, ay + 6);
+                ctx.fill();
+            } else if (arrowDir === 'down') {
+                ctx.beginPath();
+                ctx.moveTo(ax + 4, ay + 6);
+                ctx.lineTo(ax, ay);
+                ctx.lineTo(ax + 8, ay);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
     },
 
     _areaName: '',

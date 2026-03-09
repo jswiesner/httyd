@@ -535,142 +535,341 @@ const Sprites = {
         const cx = size / 2;
         const cy = size / 2;
 
-        // Body
+        // Tail (drawn first so body overlaps it)
         ctx.fillStyle = d.color;
-        this._fillEllipse(ctx, cx, cy + 4, 16, 12);
+        ctx.beginPath();
+        ctx.moveTo(cx + 12, cy + 8);
+        ctx.quadraticCurveTo(cx + 20, cy + 16, cx + 22, cy + 12);
+        ctx.lineTo(cx + 20, cy + 14);
+        ctx.quadraticCurveTo(cx + 16, cy + 14, cx + 10, cy + 10);
+        ctx.fill();
+        // Tail tip fin
+        ctx.fillStyle = d.light;
+        ctx.beginPath();
+        ctx.moveTo(cx + 21, cy + 11);
+        ctx.lineTo(cx + 24, cy + 8);
+        ctx.lineTo(cx + 24, cy + 15);
+        ctx.lineTo(cx + 21, cy + 13);
+        ctx.fill();
 
-        // Head
-        ctx.fillStyle = d.color;
-        const headY = cy - 10;
-        this._fillEllipse(ctx, cx, headY, 10, 8);
-
-        // Darker underbelly
-        ctx.fillStyle = d.dark;
-        this._fillEllipse(ctx, cx, cy + 8, 12, 6);
-
-        // Wings
+        // Wings (behind body)
         ctx.fillStyle = d.light;
         if (!isBack) {
-            // Left wing
+            // Left wing - multi-segment
             ctx.beginPath();
             ctx.moveTo(cx - 14, cy);
-            ctx.lineTo(cx - 22, cy - 14);
+            ctx.lineTo(cx - 20, cy - 8);
+            ctx.lineTo(cx - 22, cy - 16);
+            ctx.lineTo(cx - 16, cy - 10);
             ctx.lineTo(cx - 8, cy - 4);
             ctx.fill();
+            // Wing membrane
+            ctx.fillStyle = d.color;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(cx - 14, cy);
+            ctx.lineTo(cx - 20, cy - 12);
+            ctx.lineTo(cx - 8, cy - 4);
+            ctx.fill();
+            ctx.globalAlpha = 1;
             // Right wing
+            ctx.fillStyle = d.light;
             ctx.beginPath();
             ctx.moveTo(cx + 14, cy);
-            ctx.lineTo(cx + 22, cy - 14);
+            ctx.lineTo(cx + 20, cy - 8);
+            ctx.lineTo(cx + 22, cy - 16);
+            ctx.lineTo(cx + 16, cy - 10);
             ctx.lineTo(cx + 8, cy - 4);
             ctx.fill();
+            ctx.fillStyle = d.color;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(cx + 14, cy);
+            ctx.lineTo(cx + 20, cy - 12);
+            ctx.lineTo(cx + 8, cy - 4);
+            ctx.fill();
+            ctx.globalAlpha = 1;
         } else {
-            // Wings from behind - spread wider
+            // Wings from behind - spread wide
             ctx.beginPath();
             ctx.moveTo(cx - 12, cy + 2);
-            ctx.lineTo(cx - 20, cy - 12);
+            ctx.lineTo(cx - 18, cy - 6);
+            ctx.lineTo(cx - 22, cy - 14);
+            ctx.lineTo(cx - 14, cy - 8);
             ctx.lineTo(cx - 6, cy - 2);
             ctx.fill();
             ctx.beginPath();
             ctx.moveTo(cx + 12, cy + 2);
-            ctx.lineTo(cx + 20, cy - 12);
+            ctx.lineTo(cx + 18, cy - 6);
+            ctx.lineTo(cx + 22, cy - 14);
+            ctx.lineTo(cx + 14, cy - 8);
             ctx.lineTo(cx + 6, cy - 2);
             ctx.fill();
+            // Wing bones
+            ctx.strokeStyle = d.dark;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - 12, cy + 2);
+            ctx.lineTo(cx - 22, cy - 14);
+            ctx.moveTo(cx + 12, cy + 2);
+            ctx.lineTo(cx + 22, cy - 14);
+            ctx.stroke();
         }
 
-        // Legs
-        ctx.fillStyle = d.dark;
-        ctx.fillRect(cx - 8, cy + 12, 4, 6);
-        ctx.fillRect(cx + 4, cy + 12, 4, 6);
-
-        // Tail
+        // Body
         ctx.fillStyle = d.color;
+        this._fillEllipse(ctx, cx, cy + 4, 16, 12);
+
+        // Scale pattern on body
+        ctx.fillStyle = d.dark;
+        ctx.globalAlpha = 0.3;
+        for (let i = 0; i < 6; i++) {
+            const sx = cx - 8 + i * 3 + (i % 2);
+            const sy = cy + 1 + (i % 2) * 3;
+            ctx.fillRect(sx, sy, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+
+        // Lighter belly
+        ctx.fillStyle = d.light;
+        ctx.globalAlpha = 0.5;
+        this._fillEllipse(ctx, cx, cy + 6, 10, 6);
+        ctx.globalAlpha = 1;
+
+        // Darker underbelly shadow
+        ctx.fillStyle = d.dark;
+        this._fillEllipse(ctx, cx, cy + 10, 12, 4);
+
+        // Neck
+        ctx.fillStyle = d.color;
+        const headY = cy - 10;
         ctx.beginPath();
-        ctx.moveTo(cx + 12, cy + 8);
-        ctx.lineTo(cx + 20, cy + 14);
-        ctx.lineTo(cx + 14, cy + 12);
+        ctx.moveTo(cx - 6, cy - 2);
+        ctx.quadraticCurveTo(cx - 4, headY + 6, cx - 6, headY + 2);
+        ctx.lineTo(cx + 6, headY + 2);
+        ctx.quadraticCurveTo(cx + 4, headY + 6, cx + 6, cy - 2);
         ctx.fill();
 
+        // Head
+        ctx.fillStyle = d.color;
+        this._fillEllipse(ctx, cx, headY, 10, 8);
+
+        // Head highlight
+        ctx.fillStyle = d.light;
+        ctx.globalAlpha = 0.3;
+        this._fillEllipse(ctx, cx - 2, headY - 2, 6, 4);
+        ctx.globalAlpha = 1;
+
+        // Legs with claws
+        ctx.fillStyle = d.dark;
+        ctx.fillRect(cx - 9, cy + 12, 4, 7);
+        ctx.fillRect(cx + 5, cy + 12, 4, 7);
+        // Claws
+        ctx.fillStyle = d.light;
+        ctx.fillRect(cx - 10, cy + 18, 2, 2);
+        ctx.fillRect(cx - 7, cy + 18, 2, 2);
+        ctx.fillRect(cx + 4, cy + 18, 2, 2);
+        ctx.fillRect(cx + 7, cy + 18, 2, 2);
+
         if (!isBack) {
+            // Snout/jaw
+            ctx.fillStyle = d.dark;
+            this._fillEllipse(ctx, cx, headY + 4, 6, 3);
+
             // Eyes
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(cx - 6, headY - 3, 4, 4);
+            ctx.fillRect(cx + 2, headY - 3, 4, 4);
             ctx.fillStyle = d.eye;
             ctx.fillRect(cx - 5, headY - 2, 3, 3);
-            ctx.fillRect(cx + 2, headY - 2, 3, 3);
+            ctx.fillRect(cx + 3, headY - 2, 3, 3);
             // Pupils
             ctx.fillStyle = '#000';
-            ctx.fillRect(cx - 4, headY - 1, 1, 2);
-            ctx.fillRect(cx + 3, headY - 1, 1, 2);
+            ctx.fillRect(cx - 4, headY - 1, 2, 2);
+            ctx.fillRect(cx + 3, headY - 1, 2, 2);
+            // Eye shine
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(cx - 5, headY - 2, 1, 1);
+            ctx.fillRect(cx + 3, headY - 2, 1, 1);
 
             // Nostrils
             ctx.fillStyle = d.dark;
-            ctx.fillRect(cx - 2, headY + 3, 1, 1);
-            ctx.fillRect(cx + 1, headY + 3, 1, 1);
+            ctx.fillRect(cx - 3, headY + 4, 2, 1);
+            ctx.fillRect(cx + 1, headY + 4, 2, 1);
+
+            // Mouth line
+            ctx.strokeStyle = d.dark;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - 4, headY + 6);
+            ctx.lineTo(cx + 4, headY + 6);
+            ctx.stroke();
+        } else {
+            // Back of head - spine ridges
+            ctx.fillStyle = d.dark;
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(cx - 1, headY - 4 + i * 4, 2, 3);
+            }
         }
 
         // Species-specific details
         if (speciesId === 'deadly_nadder') {
-            // Head crest spikes
+            // Crown of spikes
             ctx.fillStyle = d.light;
-            for (let i = 0; i < 3; i++) {
-                ctx.fillRect(cx - 2 + i * 3, headY - 8 + i, 2, 4);
+            for (let i = 0; i < 5; i++) {
+                const angle = -Math.PI / 2 + (i - 2) * 0.4;
+                const sx = cx + Math.cos(angle) * 8;
+                const sy = headY + Math.sin(angle) * 8 - 2;
+                ctx.fillRect(sx - 1, sy - 4, 2, 5);
             }
-        } else if (speciesId === 'monstrous_nightmare') {
-            // Horns
-            ctx.fillStyle = d.dark;
-            ctx.fillRect(cx - 6, headY - 6, 2, 5);
-            ctx.fillRect(cx + 4, headY - 6, 2, 5);
-        } else if (speciesId === 'night_fury' || speciesId === 'light_fury') {
-            // Ear flaps
+            // Tail spines
             ctx.fillStyle = d.light;
-            ctx.fillRect(cx - 8, headY - 4, 3, 3);
-            ctx.fillRect(cx + 5, headY - 4, 3, 3);
+            ctx.fillRect(cx + 18, cy + 10, 2, 3);
+            ctx.fillRect(cx + 20, cy + 9, 2, 3);
+        } else if (speciesId === 'monstrous_nightmare') {
+            // Curved horns
+            ctx.fillStyle = d.dark;
+            ctx.beginPath();
+            ctx.moveTo(cx - 6, headY - 2);
+            ctx.quadraticCurveTo(cx - 8, headY - 10, cx - 4, headY - 8);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx + 6, headY - 2);
+            ctx.quadraticCurveTo(cx + 8, headY - 10, cx + 4, headY - 8);
+            ctx.fill();
+            // Fire glow on body
+            ctx.fillStyle = '#f86830';
+            ctx.globalAlpha = 0.3;
+            this._fillEllipse(ctx, cx, cy + 4, 14, 10);
+            ctx.globalAlpha = 1;
+        } else if (speciesId === 'night_fury' || speciesId === 'light_fury') {
+            // Ear flaps / head plates
+            ctx.fillStyle = d.light;
+            ctx.beginPath();
+            ctx.moveTo(cx - 8, headY);
+            ctx.lineTo(cx - 12, headY - 6);
+            ctx.lineTo(cx - 6, headY - 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx + 8, headY);
+            ctx.lineTo(cx + 12, headY - 6);
+            ctx.lineTo(cx + 6, headY - 2);
+            ctx.fill();
+            // Sleek body highlight
+            ctx.fillStyle = d.light;
+            ctx.globalAlpha = 0.2;
+            this._fillEllipse(ctx, cx, cy + 2, 14, 8);
+            ctx.globalAlpha = 1;
         } else if (speciesId === 'stormcutter') {
-            // Four wings (extra pair)
+            // Four wings (extra lower pair)
             ctx.fillStyle = d.color;
             ctx.beginPath();
-            ctx.moveTo(cx - 10, cy + 4);
-            ctx.lineTo(cx - 16, cy - 6);
-            ctx.lineTo(cx - 6, cy);
+            ctx.moveTo(cx - 10, cy + 6);
+            ctx.lineTo(cx - 18, cy - 4);
+            ctx.lineTo(cx - 12, cy);
+            ctx.lineTo(cx - 6, cy + 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(cx + 10, cy + 4);
-            ctx.lineTo(cx + 16, cy - 6);
-            ctx.lineTo(cx + 6, cy);
+            ctx.moveTo(cx + 10, cy + 6);
+            ctx.lineTo(cx + 18, cy - 4);
+            ctx.lineTo(cx + 12, cy);
+            ctx.lineTo(cx + 6, cy + 2);
             ctx.fill();
+            // Head crest
+            ctx.fillStyle = d.light;
+            ctx.fillRect(cx - 1, headY - 8, 2, 6);
         } else if (speciesId === 'hideous_zippleback') {
-            // Two heads
+            // Two necks and heads
             ctx.fillStyle = d.color;
-            this._fillEllipse(ctx, cx - 6, headY, 7, 6);
-            this._fillEllipse(ctx, cx + 6, headY, 7, 6);
+            // Left neck
+            ctx.beginPath();
+            ctx.moveTo(cx - 4, cy - 2);
+            ctx.quadraticCurveTo(cx - 8, headY + 4, cx - 8, headY);
+            ctx.lineTo(cx - 2, headY);
+            ctx.quadraticCurveTo(cx - 2, headY + 4, cx, cy - 2);
+            ctx.fill();
+            // Right neck
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 2);
+            ctx.quadraticCurveTo(cx + 2, headY + 4, cx + 2, headY);
+            ctx.lineTo(cx + 8, headY);
+            ctx.quadraticCurveTo(cx + 8, headY + 4, cx + 4, cy - 2);
+            ctx.fill();
+            this._fillEllipse(ctx, cx - 6, headY - 2, 7, 6);
+            this._fillEllipse(ctx, cx + 6, headY - 2, 7, 6);
             if (!isBack) {
                 ctx.fillStyle = d.eye;
-                ctx.fillRect(cx - 8, headY - 2, 2, 2);
-                ctx.fillRect(cx + 6, headY - 2, 2, 2);
+                ctx.fillRect(cx - 9, headY - 4, 2, 2);
+                ctx.fillRect(cx - 5, headY - 4, 2, 2);
+                ctx.fillRect(cx + 4, headY - 4, 2, 2);
+                ctx.fillRect(cx + 8, headY - 4, 2, 2);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(cx - 8, headY - 3, 1, 1);
+                ctx.fillRect(cx - 4, headY - 3, 1, 1);
+                ctx.fillRect(cx + 5, headY - 3, 1, 1);
+                ctx.fillRect(cx + 9, headY - 3, 1, 1);
             }
         } else if (speciesId === 'gronckle') {
-            // Bumpy texture
+            // Rocky bumps on body
             ctx.fillStyle = d.dark;
-            for (let i = 0; i < 5; i++) {
-                const bx = cx - 10 + Math.floor(i * 5);
-                const by = cy + Math.floor(Math.sin(i) * 4);
-                ctx.fillRect(bx, by, 2, 2);
+            const bumps = [[-10,0],[-5,3],[0,-1],[5,2],[10,1],[-7,5],[3,6],[8,4]];
+            for (const [bx, by] of bumps) {
+                ctx.fillRect(cx + bx, cy + by, 3, 3);
+                ctx.fillStyle = d.light;
+                ctx.fillRect(cx + bx, cy + by, 1, 1);
+                ctx.fillStyle = d.dark;
             }
+            // Stubby wings
+            ctx.fillStyle = d.color;
+            ctx.beginPath();
+            ctx.moveTo(cx - 14, cy + 2);
+            ctx.lineTo(cx - 18, cy - 6);
+            ctx.lineTo(cx - 10, cy - 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx + 14, cy + 2);
+            ctx.lineTo(cx + 18, cy - 6);
+            ctx.lineTo(cx + 10, cy - 2);
+            ctx.fill();
         } else if (speciesId === 'fireworm') {
-            // Glowing spots
-            ctx.fillStyle = '#ffaa00';
-            for (let i = 0; i < 4; i++) {
-                const bx = cx - 8 + i * 5;
-                const by = cy + 2 + (i % 2) * 4;
-                ctx.fillRect(bx, by, 2, 2);
+            // Glowing bioluminescent spots
+            const spots = [[-8,0],[-3,4],[2,1],[7,3],[-5,7],[4,6]];
+            for (const [bx, by] of spots) {
+                ctx.fillStyle = '#ffcc00';
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(cx + bx, cy + by, 3, 3);
+                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = 0.6;
+                ctx.fillRect(cx + bx + 1, cy + by + 1, 1, 1);
             }
+            ctx.globalAlpha = 1;
         } else if (speciesId === 'razorwhip') {
-            // Sharp tail blade
+            // Metallic sheen
+            ctx.fillStyle = d.light;
+            ctx.globalAlpha = 0.4;
+            this._fillEllipse(ctx, cx - 4, cy + 2, 8, 6);
+            ctx.globalAlpha = 1;
+            // Sharp tail blade (bigger)
             ctx.fillStyle = d.light;
             ctx.beginPath();
-            ctx.moveTo(cx + 18, cy + 12);
-            ctx.lineTo(cx + 24, cy + 10);
-            ctx.lineTo(cx + 24, cy + 16);
+            ctx.moveTo(cx + 20, cy + 12);
+            ctx.lineTo(cx + 26, cy + 8);
+            ctx.lineTo(cx + 24, cy + 14);
+            ctx.lineTo(cx + 26, cy + 18);
+            ctx.lineTo(cx + 20, cy + 14);
             ctx.fill();
+            // Metal spine ridges
+            ctx.fillStyle = d.light;
+            for (let i = 0; i < 4; i++) {
+                ctx.fillRect(cx - 2 + i * 3, cy - 2 + i, 2, 3);
+            }
+        } else if (speciesId === 'terrible_terror') {
+            // Small horns
+            ctx.fillStyle = d.dark;
+            ctx.fillRect(cx - 4, headY - 5, 2, 3);
+            ctx.fillRect(cx + 2, headY - 5, 2, 3);
         }
+    },
     },
 
     _fillEllipse(ctx, cx, cy, rx, ry) {
