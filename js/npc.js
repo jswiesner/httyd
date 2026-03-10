@@ -79,4 +79,16 @@ const DIALOGUES = {
         { text: "I sail between the\nislands. The sea is\nfull of dangers!" },
         { text: "If you see a path\nleading off the edge\nof town, follow it!" },
     ],
+    gobber_forge: [
+        { text: "Welcome to the forge!\nI'm Gobber, the best\nblacksmith on Berk!" },
+        { text: "Bring me materials\nand I'll craft you\nsome dragon saddles." },
+        { text: "Dragon Scales, Iron,\nand Leather - find\nthem on your travels!" },
+        { action: 'openForge' },
+    ],
+    flight_tutorial: [
+        { text: "Press F to toggle\nflight mode when you\nhave a dragon!" },
+        { text: "In the sky, you can\nfly over trees and\nwater freely." },
+        { text: "Look for cloud banks\nwhere rare dragons\nhide in the sky!" },
+        { text: "Wind currents will\npush you along -\nuse them wisely!" },
+    ],
 };

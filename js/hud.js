@@ -39,6 +39,36 @@ const HUD = {
 
             // Level text
             Sprites.drawText(ctx, 'L' + dragon.level, x + 7, y + 2, COLORS.TEXT);
+
+            // Saddle indicator
+            if (dragon.saddle) {
+                ctx.fillStyle = '#e8d040';
+                ctx.fillRect(x + 14, y + 2, 2, 2);
+            }
+        }
+
+        // Flight mode indicator (top-right area)
+        if (player.isFlying) {
+            const blink = Math.floor(Date.now() / 500) % 2;
+            const flyText = 'FLY';
+            const fx = SCREEN_W - Sprites.textWidth(flyText) - 4;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(fx - 2, 2, Sprites.textWidth(flyText) + 4, 10);
+            Sprites.drawText(ctx, flyText, fx, 3, blink ? '#5ac8e8' : '#a0e0f0');
+        }
+
+        // Weather indicator (below flight indicator)
+        if (typeof WeatherSystem !== 'undefined' && WeatherSystem.current !== Weather.CLEAR) {
+            const weatherNames = { fog: 'FOG', thunderstorm: 'STRM' };
+            const wText = weatherNames[WeatherSystem.current] || '';
+            if (wText) {
+                const wx = SCREEN_W - Sprites.textWidth(wText) - 4;
+                const wy = player.isFlying ? 14 : 2;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(wx - 2, wy, Sprites.textWidth(wText) + 4, 10);
+                const wColor = WeatherSystem.current === Weather.THUNDERSTORM ? '#e8d040' : '#a0a8c0';
+                Sprites.drawText(ctx, wText, wx, wy + 1, wColor);
+            }
         }
 
         // Area name (briefly shown on map entry)
@@ -54,8 +84,21 @@ const HUD = {
             ctx.globalAlpha = 1;
         }
 
-        // Exit indicators - show arrows near warp points at screen edges
+        // Exit indicators
         this._renderExitIndicators(ctx, player);
+
+        // Flight controls hint (shown briefly when first flying)
+        if (player.isFlying && Game.currentMap && Game.currentMap.skyWarp) {
+            // Show sky warp hint near top of screen
+            const hintTimer = Math.sin(Date.now() * 0.002) * 0.3 + 0.7;
+            ctx.globalAlpha = hintTimer * 0.6;
+            const hint = 'FLY UP TO SKY ISLANDS';
+            const hx = (SCREEN_W - Sprites.textWidth(hint)) / 2;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(hx - 4, SCREEN_H - 14, Sprites.textWidth(hint) + 8, 12);
+            Sprites.drawText(ctx, hint, hx, SCREEN_H - 12, '#5ac8e8');
+            ctx.globalAlpha = 1;
+        }
     },
 
     _renderExitIndicators(ctx, player) {
@@ -67,13 +110,14 @@ const HUD = {
         const blink = Math.floor(Date.now() / 600) % 2;
 
         for (const warp of map.warps) {
+            // Skip flight-only warps if not flying
+            if (warp.flightOnly && !player.isFlying) continue;
+
             const screenX = Math.round(warp.x * TILE_SIZE - cam.x);
             const screenY = Math.round(warp.y * TILE_SIZE - cam.y);
 
-            // Only show if near screen edges and visible
             if (screenX < -16 || screenX > SCREEN_W + 16 || screenY < -16 || screenY > SCREEN_H + 16) continue;
 
-            // Determine direction of exit based on position at map edge
             let arrowDir = null;
             let ax, ay;
             if (warp.x === 0) {
@@ -96,9 +140,8 @@ const HUD = {
 
             if (!arrowDir) continue;
 
-            // Pulsing arrow
             ctx.globalAlpha = blink ? 0.9 : 0.5;
-            ctx.fillStyle = '#ffe850';
+            ctx.fillStyle = warp.flightOnly ? '#5ac8e8' : '#ffe850';
 
             if (arrowDir === 'left') {
                 ctx.beginPath();
@@ -134,6 +177,6 @@ const HUD = {
 
     showAreaName(name) {
         this._areaName = name;
-        this._areaNameTimer = 2.5; // seconds
+        this._areaNameTimer = 2.5;
     }
 };

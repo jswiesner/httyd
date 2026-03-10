@@ -1,14 +1,22 @@
 const MenuSystem = {
     active: false,
     selectedItem: 0,
-    menuItems: ['DRAGONS', 'SAVE', 'CLOSE'],
-    subMenu: null, // 'dragons'
+    menuItems: ['DRAGONS', 'BAG', 'SAVE', 'CLOSE'],
+    subMenu: null,
     selectedDragon: 0,
+    bagScroll: 0,
+    selectedBagItem: 0,
+    forgeMode: false,
+    selectedRecipe: 0,
+    equipMode: false,
+    selectedEquipDragon: 0,
 
     open() {
         this.active = true;
         this.selectedItem = 0;
         this.subMenu = null;
+        this.forgeMode = false;
+        this.equipMode = false;
         GameAudio.sfx.menuOpen();
         Game.pushState(GameState.MENU);
     },
@@ -16,14 +24,31 @@ const MenuSystem = {
     close() {
         this.active = false;
         this.subMenu = null;
+        this.forgeMode = false;
+        this.equipMode = false;
         Game.popState();
     },
 
     update(dt) {
         if (!this.active) return;
 
+        if (this.forgeMode) {
+            this.updateForge();
+            return;
+        }
+
+        if (this.equipMode) {
+            this.updateEquip();
+            return;
+        }
+
         if (this.subMenu === 'dragons') {
             this.updateDragonsMenu();
+            return;
+        }
+
+        if (this.subMenu === 'bag') {
+            this.updateBag();
             return;
         }
 
@@ -41,12 +66,16 @@ const MenuSystem = {
                     this.subMenu = 'dragons';
                     this.selectedDragon = 0;
                     break;
-                case 1: // SAVE
+                case 1: // BAG
+                    this.subMenu = 'bag';
+                    this.selectedBagItem = 0;
+                    break;
+                case 2: // SAVE
                     Game.saveGame();
                     GameAudio.sfx.save();
                     this.close();
                     break;
-                case 2: // CLOSE
+                case 3: // CLOSE
                     this.close();
                     break;
             }
@@ -73,30 +102,154 @@ const MenuSystem = {
         if (Input.wasPressed('arrowup') || Input.wasPressed('w')) {
             if (this.selectedDragon > 0) {
                 this.selectedDragon--;
-                GameAudio.sfx.select();
             } else {
-                // Wrap to last dragon
                 this.selectedDragon = party.length - 1;
-                GameAudio.sfx.select();
             }
+            GameAudio.sfx.select();
         }
         if (Input.wasPressed('arrowdown') || Input.wasPressed('s')) {
             if (this.selectedDragon < party.length - 1) {
                 this.selectedDragon++;
-                GameAudio.sfx.select();
             } else {
-                // Wrap to first dragon
                 this.selectedDragon = 0;
-                GameAudio.sfx.select();
+            }
+            GameAudio.sfx.select();
+        }
+    },
+
+    updateBag() {
+        if (Input.cancel()) {
+            this.subMenu = null;
+            GameAudio.sfx.cancel();
+            return;
+        }
+
+        const allItems = this._getAllBagItems();
+
+        if (allItems.length === 0) return;
+
+        if (Input.wasPressed('arrowup') || Input.wasPressed('w')) {
+            if (this.selectedBagItem > 0) { this.selectedBagItem--; GameAudio.sfx.select(); }
+        }
+        if (Input.wasPressed('arrowdown') || Input.wasPressed('s')) {
+            if (this.selectedBagItem < allItems.length - 1) { this.selectedBagItem++; GameAudio.sfx.select(); }
+        }
+
+        // Equip saddle with confirm
+        if (Input.confirm()) {
+            const item = allItems[this.selectedBagItem];
+            if (item && item.isSaddle) {
+                this.equipMode = true;
+                this.selectedEquipDragon = 0;
+                GameAudio.sfx.confirm();
             }
         }
+    },
+
+    updateForge() {
+        if (Input.cancel()) {
+            this.forgeMode = false;
+            this.close();
+            GameAudio.sfx.cancel();
+            return;
+        }
+
+        const recipes = Forge.getRecipes();
+
+        if (Input.wasPressed('arrowup') || Input.wasPressed('w')) {
+            if (this.selectedRecipe > 0) { this.selectedRecipe--; GameAudio.sfx.select(); }
+        }
+        if (Input.wasPressed('arrowdown') || Input.wasPressed('s')) {
+            if (this.selectedRecipe < recipes.length - 1) { this.selectedRecipe++; GameAudio.sfx.select(); }
+        }
+
+        if (Input.confirm()) {
+            const recipe = recipes[this.selectedRecipe];
+            if (recipe && recipe.canCraft) {
+                if (Forge.craft(recipe.id)) {
+                    GameAudio.sfx.confirm();
+                    this.forgeMode = false;
+                    this.close();
+                    DialogueSystem.start([
+                        { text: 'Gobber forged a\n' + recipe.name + '!\nCheck your bag.' }
+                    ]);
+                }
+            } else {
+                GameAudio.sfx.bump();
+            }
+        }
+    },
+
+    updateEquip() {
+        if (Input.cancel()) {
+            this.equipMode = false;
+            GameAudio.sfx.cancel();
+            return;
+        }
+
+        const party = Game.player.party;
+        if (party.length === 0) {
+            this.equipMode = false;
+            return;
+        }
+
+        if (Input.wasPressed('arrowup') || Input.wasPressed('w')) {
+            if (this.selectedEquipDragon > 0) { this.selectedEquipDragon--; GameAudio.sfx.select(); }
+        }
+        if (Input.wasPressed('arrowdown') || Input.wasPressed('s')) {
+            if (this.selectedEquipDragon < party.length - 1) { this.selectedEquipDragon++; GameAudio.sfx.select(); }
+        }
+
+        if (Input.confirm()) {
+            const allItems = this._getAllBagItems();
+            const selectedItem = allItems[this.selectedBagItem];
+
+            if (selectedItem && selectedItem.saddleId) {
+                const dragon = party[this.selectedEquipDragon];
+                Inventory.equipSaddle(dragon, selectedItem.saddleId);
+                Inventory.removeItem('saddle_' + selectedItem.saddleId);
+                GameAudio.sfx.confirm();
+                this.equipMode = false;
+                this.subMenu = null;
+                DialogueSystem.start([
+                    { text: 'Equipped ' + SADDLES[selectedItem.saddleId].name + '\non ' + dragon.species.name + '!' }
+                ]);
+            }
+        }
+    },
+
+    _getAllBagItems() {
+        const items = Inventory.getItemList();
+        const saddleItems = [];
+        for (const [id, saddle] of Object.entries(SADDLES)) {
+            const count = Inventory.getCount('saddle_' + id);
+            if (count > 0) {
+                saddleItems.push({ id: 'saddle_' + id, name: saddle.name, desc: saddle.desc, count, isSaddle: true, saddleId: id });
+            }
+        }
+        return [...items, ...saddleItems];
     },
 
     render(ctx) {
         if (!this.active) return;
 
+        if (this.forgeMode) {
+            this.renderForge(ctx);
+            return;
+        }
+
+        if (this.equipMode) {
+            this.renderEquip(ctx);
+            return;
+        }
+
         if (this.subMenu === 'dragons') {
             this.renderDragonsMenu(ctx);
+            return;
+        }
+
+        if (this.subMenu === 'bag') {
+            this.renderBag(ctx);
             return;
         }
 
@@ -124,18 +277,15 @@ const MenuSystem = {
     renderDragonsMenu(ctx) {
         const party = Game.player.party;
 
-        // Full screen dark background
         ctx.fillStyle = COLORS.MENU_BG;
         ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-
-        // Outer border
         ctx.strokeStyle = COLORS.MENU_BORDER;
         ctx.lineWidth = 1;
         ctx.strokeRect(1.5, 1.5, SCREEN_W - 3, SCREEN_H - 3);
 
         if (party.length === 0) {
             Sprites.drawText(ctx, 'No dragons yet!', 40, 66, COLORS.GRAY);
-            Sprites.drawText(ctx, 'X:BACK', 60, 130, COLORS.GRAY);
+            Sprites.drawText(ctx, 'X:BACK', 60, SCREEN_H - 14, COLORS.GRAY);
             return;
         }
 
@@ -143,30 +293,27 @@ const MenuSystem = {
         const species = dragon.species;
         const typeColor = this.getTypeColor(species.type);
 
-        // --- Top header bar with type-colored accent ---
+        // Top header bar
         ctx.fillStyle = typeColor;
         ctx.fillRect(2, 2, SCREEN_W - 4, 2);
 
-        // --- Page indicator (top right) ---
+        // Page indicator
         const pageText = (this.selectedDragon + 1) + '/' + party.length;
-        const pageX = SCREEN_W - Sprites.textWidth(pageText) - 6;
-        Sprites.drawText(ctx, pageText, pageX, 7, COLORS.GRAY);
+        Sprites.drawText(ctx, pageText, SCREEN_W - Sprites.textWidth(pageText) - 6, 7, COLORS.GRAY);
 
-        // --- Dragon name prominently displayed ---
+        // Dragon name
         Sprites.drawText(ctx, species.name.toUpperCase(), 6, 7, COLORS.TEXT);
 
-        // --- Thin separator line under header ---
         ctx.fillStyle = COLORS.GRAY;
         ctx.fillRect(4, 16, SCREEN_W - 8, 1);
 
-        // --- Left side: Dragon sprite (large) ---
+        // Dragon sprite
         const sprite = Sprites.get(dragon.speciesId + '_front');
         if (sprite) {
-            // Draw sprite at 48x48 native size
             ctx.drawImage(sprite, 4, 20, 48, 48);
         }
 
-        // Type badge under sprite
+        // Type badge
         ctx.fillStyle = typeColor;
         ctx.globalAlpha = 0.3;
         ctx.fillRect(6, 70, 44, 10);
@@ -177,16 +324,20 @@ const MenuSystem = {
         const typeLabelX = 6 + Math.floor((44 - Sprites.textWidth(typeLabel)) / 2);
         Sprites.drawText(ctx, typeLabel, typeLabelX, 72, typeColor);
 
-        // --- Right side: Stats panel ---
-        const statX = 56;
+        // Saddle indicator
+        if (dragon.saddle) {
+            const saddleName = SADDLES[dragon.saddle] ? SADDLES[dragon.saddle].name : 'Unknown';
+            Sprites.drawText(ctx, saddleName, 6, 82, '#e8d040');
+        }
 
-        // Level + XP
+        // Stats panel
+        const statX = 56;
         Sprites.drawText(ctx, 'LV ' + dragon.level, statX, 20, COLORS.TEXT);
 
         // XP bar
         Sprites.drawText(ctx, 'XP', statX, 29, COLORS.GRAY);
         const xpBarX = statX + 18;
-        const xpBarW = 82;
+        const xpBarW = SCREEN_W - xpBarX - 6;
         ctx.fillStyle = COLORS.BLACK;
         ctx.fillRect(xpBarX, 29, xpBarW, 7);
         ctx.strokeStyle = COLORS.GRAY;
@@ -197,13 +348,12 @@ const MenuSystem = {
             ctx.fillRect(xpBarX + 1, 30, Math.floor((xpBarW - 2) * xpRatio), 5);
         }
         const xpText = dragon.xp + '/' + dragon.xpToNext;
-        const xpTextX = xpBarX + Math.floor((xpBarW - Sprites.textWidth(xpText)) / 2);
-        Sprites.drawText(ctx, xpText, xpTextX, 30, COLORS.TEXT);
+        Sprites.drawText(ctx, xpText, xpBarX + Math.floor((xpBarW - Sprites.textWidth(xpText)) / 2), 30, COLORS.TEXT);
 
         // HP bar
         Sprites.drawText(ctx, 'HP', statX, 40, COLORS.GRAY);
         const hpBarX = statX + 18;
-        const hpBarW = 82;
+        const hpBarW = SCREEN_W - hpBarX - 6;
         ctx.fillStyle = COLORS.BLACK;
         ctx.fillRect(hpBarX, 40, hpBarW, 7);
         ctx.strokeStyle = COLORS.GRAY;
@@ -217,46 +367,39 @@ const MenuSystem = {
             ctx.fillRect(hpBarX + 1, 41, Math.floor((hpBarW - 2) * hpRatio), 5);
         }
         const hpText = dragon.currentHp + '/' + dragon.maxHp;
-        const hpTextX = hpBarX + Math.floor((hpBarW - Sprites.textWidth(hpText)) / 2);
-        Sprites.drawText(ctx, hpText, hpTextX, 41, COLORS.TEXT);
+        Sprites.drawText(ctx, hpText, hpBarX + Math.floor((hpBarW - Sprites.textWidth(hpText)) / 2), 41, COLORS.TEXT);
 
-        // --- Stat bars: ATK, DEF, SPD ---
+        // Stat bars
         const statBarStartY = 51;
-        const statBarH = 7;
         const statBarSpacing = 10;
         const statLabels = ['ATK', 'DEF', 'SPD'];
         const statValues = [dragon.stats.attack, dragon.stats.defense, dragon.stats.speed];
         const statColors = ['#e86040', '#50a0e8', '#40c870'];
-        // Max stat for bar scaling (rough max at high levels)
         const maxStatForBar = 50;
 
         for (let i = 0; i < 3; i++) {
             const sy = statBarStartY + i * statBarSpacing;
             Sprites.drawText(ctx, statLabels[i], statX, sy, COLORS.GRAY);
             const barX = statX + 24;
-            const barW = 58;
+            const barW = SCREEN_W - barX - 30;
+            const statBarH = 7;
 
-            // Bar background
             ctx.fillStyle = COLORS.BLACK;
             ctx.fillRect(barX, sy, barW, statBarH);
             ctx.strokeStyle = COLORS.GRAY;
             ctx.strokeRect(barX + 0.5, sy + 0.5, barW - 1, statBarH - 1);
 
-            // Bar fill
             const ratio = Math.min(statValues[i] / maxStatForBar, 1);
             if (ratio > 0) {
                 ctx.fillStyle = statColors[i];
                 ctx.fillRect(barX + 1, sy + 1, Math.floor((barW - 2) * ratio), statBarH - 2);
             }
-
-            // Numeric value to the right of bar
             Sprites.drawText(ctx, '' + statValues[i], barX + barW + 3, sy, COLORS.TEXT);
         }
 
-        // --- Moves section ---
+        // Moves section
         ctx.fillStyle = COLORS.GRAY;
         ctx.fillRect(4, 83, SCREEN_W - 8, 1);
-
         Sprites.drawText(ctx, 'MOVES', 6, 86, COLORS.TEXT);
 
         const moveStartY = 95;
@@ -267,18 +410,13 @@ const MenuSystem = {
             const my = moveStartY + i * moveLineH;
             const moveTypeColor = this.getTypeColor(moveData.type);
 
-            // Type indicator dot
             ctx.fillStyle = moveTypeColor;
             ctx.fillRect(6, my + 2, 3, 3);
-
-            // Move name
             Sprites.drawText(ctx, moveData.name, 12, my, moveTypeColor);
 
-            // Power
             const pwrText = 'P:' + moveData.power;
-            Sprites.drawText(ctx, pwrText, 100, my, COLORS.GRAY);
+            Sprites.drawText(ctx, pwrText, SCREEN_W - 60, my, COLORS.GRAY);
 
-            // PP
             const ppText = move.currentPp + '/' + move.maxPp;
             const ppX = SCREEN_W - Sprites.textWidth(ppText) - 6;
             const ppRatio = move.maxPp > 0 ? move.currentPp / move.maxPp : 0;
@@ -288,26 +426,167 @@ const MenuSystem = {
             Sprites.drawText(ctx, ppText, ppX, my, ppColor);
         }
 
-        // If fewer than 4 moves, show empty slots
         for (let i = dragon.moves.length; i < 4; i++) {
             const my = moveStartY + i * moveLineH;
             Sprites.drawText(ctx, '---', 12, my, COLORS.GRAY);
         }
 
-        // --- Bottom bar with controls ---
+        // Bottom bar
         ctx.fillStyle = COLORS.GRAY;
         ctx.fillRect(4, SCREEN_H - 14, SCREEN_W - 8, 1);
-
-        // Navigation arrows indicator
         if (party.length > 1) {
-            // Up/Down arrows hint
             Sprites.drawText(ctx, 'U/D:SWITCH', 6, SCREEN_H - 10, COLORS.GRAY);
         }
         Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
 
-        // Bottom type-colored accent
         ctx.fillStyle = typeColor;
         ctx.fillRect(2, SCREEN_H - 4, SCREEN_W - 4, 2);
+    },
+
+    renderBag(ctx) {
+        ctx.fillStyle = COLORS.MENU_BG;
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        ctx.strokeStyle = COLORS.MENU_BORDER;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(1.5, 1.5, SCREEN_W - 3, SCREEN_H - 3);
+
+        Sprites.drawText(ctx, 'UTILITY BELT', 6, 6, '#e8a030');
+        ctx.fillStyle = '#e8a030';
+        ctx.fillRect(4, 14, SCREEN_W - 8, 1);
+
+        const allItems = this._getAllBagItems();
+
+        if (allItems.length === 0) {
+            Sprites.drawText(ctx, 'Nothing here yet!', 6, 30, COLORS.GRAY);
+            Sprites.drawText(ctx, 'Defeat dragons and', 6, 42, COLORS.GRAY);
+            Sprites.drawText(ctx, 'explore to find items.', 6, 54, COLORS.GRAY);
+        } else {
+            const startY = 20;
+            const lineH = 12;
+            const maxVisible = Math.floor((SCREEN_H - 40) / lineH);
+
+            for (let i = 0; i < Math.min(allItems.length, maxVisible); i++) {
+                const item = allItems[i];
+                const y = startY + i * lineH;
+
+                if (i === this.selectedBagItem) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                    ctx.fillRect(4, y - 1, SCREEN_W - 8, lineH);
+                    Sprites.drawText(ctx, '>', 6, y, COLORS.WHITE);
+                }
+
+                const nameColor = item.isSaddle ? '#e8d040' : COLORS.TEXT;
+                Sprites.drawText(ctx, item.name, 16, y, nameColor);
+                Sprites.drawText(ctx, 'x' + item.count, SCREEN_W - 24, y, COLORS.GRAY);
+            }
+
+            // Selected item description
+            if (allItems[this.selectedBagItem]) {
+                const desc = allItems[this.selectedBagItem].desc;
+                ctx.fillStyle = COLORS.GRAY;
+                ctx.fillRect(4, SCREEN_H - 26, SCREEN_W - 8, 1);
+                Sprites.drawText(ctx, desc, 6, SCREEN_H - 22, COLORS.GRAY);
+
+                if (allItems[this.selectedBagItem].isSaddle) {
+                    Sprites.drawText(ctx, 'Z:EQUIP', 6, SCREEN_H - 10, COLORS.TEXT);
+                }
+            }
+        }
+
+        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+    },
+
+    renderForge(ctx) {
+        ctx.fillStyle = COLORS.MENU_BG;
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        ctx.strokeStyle = COLORS.MENU_BORDER;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(1.5, 1.5, SCREEN_W - 3, SCREEN_H - 3);
+
+        Sprites.drawText(ctx, "GOBBER'S FORGE", 6, 6, '#e84420');
+        ctx.fillStyle = '#e84420';
+        ctx.fillRect(4, 14, SCREEN_W - 8, 1);
+
+        const recipes = Forge.getRecipes();
+        const startY = 20;
+        const lineH = 28;
+
+        for (let i = 0; i < recipes.length; i++) {
+            const recipe = recipes[i];
+            const y = startY + i * lineH;
+
+            if (i === this.selectedRecipe) {
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(4, y - 1, SCREEN_W - 8, lineH);
+                Sprites.drawText(ctx, '>', 6, y, COLORS.WHITE);
+            }
+
+            const nameColor = recipe.canCraft ? '#e8d040' : COLORS.GRAY;
+            Sprites.drawText(ctx, recipe.name, 16, y, nameColor);
+            Sprites.drawText(ctx, recipe.desc, 16, y + 9, COLORS.GRAY);
+
+            // Show ingredients
+            let ingX = 16;
+            const ingY = y + 18;
+            for (const [itemId, needed] of Object.entries(recipe.recipe)) {
+                const itemName = ITEMS[itemId] ? ITEMS[itemId].name : itemId;
+                const have = Inventory.getCount(itemId);
+                const color = have >= needed ? COLORS.HP_GREEN : COLORS.HP_RED;
+                const text = itemName + ':' + have + '/' + needed;
+                Sprites.drawText(ctx, text, ingX, ingY, color);
+                ingX += Sprites.textWidth(text) + 8;
+            }
+        }
+
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.fillRect(4, SCREEN_H - 14, SCREEN_W - 8, 1);
+        Sprites.drawText(ctx, 'Z:CRAFT', 6, SCREEN_H - 10, COLORS.TEXT);
+        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+    },
+
+    renderEquip(ctx) {
+        ctx.fillStyle = COLORS.MENU_BG;
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        ctx.strokeStyle = COLORS.MENU_BORDER;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(1.5, 1.5, SCREEN_W - 3, SCREEN_H - 3);
+
+        Sprites.drawText(ctx, 'EQUIP TO WHICH DRAGON?', 6, 6, '#e8d040');
+        ctx.fillStyle = '#e8d040';
+        ctx.fillRect(4, 14, SCREEN_W - 8, 1);
+
+        const party = Game.player.party;
+        for (let i = 0; i < party.length; i++) {
+            const dragon = party[i];
+            const y = 24 + i * 24;
+
+            if (i === this.selectedEquipDragon) {
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(4, y - 2, SCREEN_W - 8, 22);
+                Sprites.drawText(ctx, '>', 6, y, COLORS.WHITE);
+            }
+
+            Sprites.drawText(ctx, dragon.species.name, 16, y, COLORS.TEXT);
+            Sprites.drawText(ctx, 'Lv' + dragon.level, 16, y + 10, COLORS.GRAY);
+
+            if (dragon.saddle) {
+                const saddleName = SADDLES[dragon.saddle] ? SADDLES[dragon.saddle].name : '?';
+                Sprites.drawText(ctx, 'Saddle: ' + saddleName, SCREEN_W / 2, y, '#e8d040');
+            } else {
+                Sprites.drawText(ctx, 'No saddle', SCREEN_W / 2, y, COLORS.GRAY);
+            }
+        }
+
+        Sprites.drawText(ctx, 'Z:EQUIP', 6, SCREEN_H - 10, COLORS.TEXT);
+        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+    },
+
+    openForge() {
+        this.active = true;
+        this.forgeMode = true;
+        this.selectedRecipe = 0;
+        GameAudio.sfx.menuOpen();
+        Game.pushState(GameState.MENU);
     },
 
     getTypeColor(type) {

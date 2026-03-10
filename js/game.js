@@ -148,24 +148,26 @@ const Game = {
 
         // Stars
         ctx.fillStyle = '#ffffff';
-        const starPositions = [[12,8],[45,15],[80,5],[120,12],[140,25],[30,30],[95,22],[150,8],[60,18],[110,28]];
+        const starPositions = [[12,8],[45,15],[80,5],[120,12],[140,25],[30,30],[95,22],[150,8],[60,18],[110,28],[180,10],[200,20],[220,6],[170,30],[210,15]];
         for (const [x, y] of starPositions) {
             const twinkle = Math.sin(Date.now() * 0.003 + x * 0.1) > 0;
             if (twinkle) ctx.fillRect(x, y, 1, 1);
         }
 
-        // Title text
-        Sprites.drawText(ctx, 'HOW TO TRAIN', 28, 20, '#e8a030');
-        Sprites.drawText(ctx, 'YOUR DRAGON', 32, 32, '#e8a030');
+        // Title text - centered
+        const title1 = 'HOW TO TRAIN';
+        const title2 = 'YOUR DRAGON';
+        Sprites.drawText(ctx, title1, Math.floor((SCREEN_W - Sprites.textWidth(title1)) / 2), 20, '#e8a030');
+        Sprites.drawText(ctx, title2, Math.floor((SCREEN_W - Sprites.textWidth(title2)) / 2), 32, '#e8a030');
 
-        // Draw a Night Fury silhouette
+        // Draw a Night Fury silhouette - centered
         const dragonSprite = Sprites.get('night_fury_front');
         if (dragonSprite) {
-            ctx.drawImage(dragonSprite, 56, 48);
+            ctx.drawImage(dragonSprite, Math.floor((SCREEN_W - 48) / 2), 48);
         }
 
         // Menu options
-        const menuY = 105;
+        const menuY = 110;
         const blink = Math.floor(this.titleBlink * 2) % 2;
 
         const options = ['NEW GAME'];
@@ -174,15 +176,17 @@ const Game = {
         for (let i = 0; i < options.length; i++) {
             const y = menuY + i * 14;
             const selected = i === this.titleSelected;
+            const optX = Math.floor((SCREEN_W - Sprites.textWidth(options[i])) / 2);
             if (selected) {
-                Sprites.drawText(ctx, '>', 40, y, COLORS.WHITE);
+                Sprites.drawText(ctx, '>', optX - 10, y, COLORS.WHITE);
             }
-            Sprites.drawText(ctx, options[i], 50, y, selected ? COLORS.WHITE : COLORS.GRAY);
+            Sprites.drawText(ctx, options[i], optX, y, selected ? COLORS.WHITE : COLORS.GRAY);
         }
 
         // Footer
         if (blink) {
-            Sprites.drawText(ctx, 'PRESS Z TO START', 22, 134, COLORS.GRAY);
+            const footerText = 'PRESS Z TO START';
+            Sprites.drawText(ctx, footerText, Math.floor((SCREEN_W - Sprites.textWidth(footerText)) / 2), SCREEN_H - 12, COLORS.GRAY);
         }
     },
 
@@ -198,6 +202,14 @@ const Game = {
         }
 
         this.camera.follow(this.player, this.currentMap.width, this.currentMap.height);
+
+        // Update weather
+        WeatherSystem.update(dt);
+
+        // Toggle flight mode with F key
+        if (Input.wasPressed('f') && !this.player.moving) {
+            this.player.toggleFlight();
+        }
 
         // Check for NPC interaction
         if (Input.confirm() && !this.player.moving) {
@@ -237,6 +249,29 @@ const Game = {
             }
         }
 
+        // Draw sky layer tiles (clouds, wind currents) if map has them
+        if (map.skyLayer) {
+            for (let row = startRow; row < endRow; row++) {
+                for (let col = startCol; col < endCol; col++) {
+                    const idx = row * map.width + col;
+                    const skyTileName = map.skyLayer[idx];
+                    if (skyTileName) {
+                        const skyTile = Tilesets.get(skyTileName);
+                        if (skyTile) {
+                            // Clouds are semi-transparent when on ground, solid when flying
+                            const isFlying = this.player && this.player.isFlying;
+                            ctx.globalAlpha = isFlying ? 1.0 : 0.4;
+                            ctx.drawImage(skyTile,
+                                Math.round(col * TILE_SIZE - cam.x),
+                                Math.round(row * TILE_SIZE - cam.y)
+                            );
+                            ctx.globalAlpha = 1.0;
+                        }
+                    }
+                }
+            }
+        }
+
         // Collect all entities and sort by Y for proper overlap
         const entities = [];
         for (const npc of this.npcs) {
@@ -250,6 +285,9 @@ const Game = {
         for (const entity of entities) {
             entity.render(ctx, cam.x, cam.y);
         }
+
+        // Weather overlay
+        WeatherSystem.render(ctx);
 
         // HUD
         if (this.state === GameState.OVERWORLD) {
@@ -379,7 +417,10 @@ const Game = {
                 moves: d.moves.map(m => ({ id: m.id, currentPp: m.currentPp, maxPp: m.maxPp })),
                 xp: d.xp,
                 xpToNext: d.xpToNext,
+                saddle: d.saddle || null,
             })),
+            inventory: Inventory.items,
+            collectedItems: Inventory.collectedItems,
         };
         localStorage.setItem('httyd_save', JSON.stringify(data));
         this.hasSave = true;
@@ -406,9 +447,18 @@ const Game = {
                     moves: d.moves,
                     xp: d.xp,
                     xpToNext: d.xpToNext,
+                    saddle: d.saddle || null,
                 };
                 return dragon;
             });
+
+            // Restore inventory
+            if (data.inventory) {
+                Inventory.items = data.inventory;
+            }
+            if (data.collectedItems) {
+                Inventory.collectedItems = data.collectedItems;
+            }
 
             this.loadMap(data.map);
             this.transition(() => {

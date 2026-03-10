@@ -1,6 +1,6 @@
-// Canvas and rendering
-const SCREEN_W = 160;
-const SCREEN_H = 144;
+// Canvas and rendering - GBA-like widescreen resolution
+const SCREEN_W = 240;
+const SCREEN_H = 160;
 const TILE_SIZE = 16;
 const TICK_RATE = 1 / 60;
 
@@ -73,6 +73,11 @@ const TILE = {
     ENCOUNTER_GRASS: 2,
     WATER: 3,
     WARP: 4,
+    CLOUD: 5,         // walkable only in flight mode, encounter grass in sky
+    WIND_UP: 6,       // pushes player upward in flight
+    WIND_DOWN: 7,     // pushes player downward in flight
+    WIND_LEFT: 8,     // pushes player left in flight
+    WIND_RIGHT: 9,    // pushes player right in flight
 };
 
 // Game states
@@ -123,3 +128,40 @@ const TYPE_CHART = {
 
 // Max party size
 const MAX_PARTY = 2;
+
+// Weather types
+const Weather = {
+    CLEAR: 'clear',
+    FOG: 'fog',
+    THUNDERSTORM: 'thunderstorm',
+};
+
+// Item definitions
+const ITEMS = {
+    dragon_scales: { name: 'Dragon Scales', desc: 'Tough scales shed by dragons.', stackable: true },
+    iron_ore: { name: 'Iron Ore', desc: 'Raw iron for the forge.', stackable: true },
+    leather: { name: 'Leather', desc: 'Sturdy Viking leather.', stackable: true },
+    tail_fin_blueprint: { name: 'Tail Fin Plans', desc: 'Plans for a prosthetic tail fin.', stackable: false },
+};
+
+// Saddle definitions
+const SADDLES = {
+    lead_lined: {
+        name: 'Lead-Lined Saddle',
+        desc: 'Immunity to lightning damage.',
+        recipe: { iron_ore: 3, dragon_scales: 2 },
+        effect: 'lightning_immune',
+    },
+    lightweight: {
+        name: 'Lightweight Frame',
+        desc: 'Increases flight speed.',
+        recipe: { leather: 2, dragon_scales: 1 },
+        effect: 'flight_speed',
+    },
+    tail_fin: {
+        name: 'Tail Fin Prosthetic',
+        desc: 'Allows an injured dragon to fly.',
+        recipe: { iron_ore: 2, leather: 2, tail_fin_blueprint: 1 },
+        effect: 'enable_flight',
+    },
+};

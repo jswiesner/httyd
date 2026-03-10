@@ -9,7 +9,7 @@ const Input = {
                 this.justPressed[key] = true;
             }
             this.keys[key] = true;
-            if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()) || e.key === 'z' || e.key === 'x') {
+            if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()) || e.key === 'z' || e.key === 'x' || e.key === 'f') {
                 e.preventDefault();
             }
         });

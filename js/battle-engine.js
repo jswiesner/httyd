@@ -255,11 +255,23 @@ const BattleEngine = {
     calcDamage(attacker, defender, move) {
         const level = attacker.level;
         const atk = attacker.stats.attack;
-        const def = defender.stats.defense;
+        let def = defender.stats.defense;
         const power = move.power;
         const base = Math.floor(((2 * level / 5 + 2) * power * atk / def) / 50 + 2);
         const random = 0.85 + Math.random() * 0.15;
-        const typeMultiplier = this.getTypeMultiplier(move.type, DRAGON_SPECIES[defender.speciesId].type);
+        let typeMultiplier = this.getTypeMultiplier(move.type, DRAGON_SPECIES[defender.speciesId].type);
+
+        // Weather power boost
+        if (typeof WeatherSystem !== 'undefined') {
+            const weatherBoost = WeatherSystem.getTypePowerBoost(move.type);
+            typeMultiplier *= weatherBoost;
+        }
+
+        // Saddle: Lead-Lined gives lightning immunity to defender
+        if (Inventory.hasSaddleEffect(defender, 'lightning_immune') && move.type === 'lightning') {
+            return 0;
+        }
+
         return Math.max(1, Math.floor(base * random * typeMultiplier));
     },
 
@@ -380,7 +392,16 @@ const BattleEngine = {
                 lvlMsg = '\n' + this.playerDragon.species.name + ' grew to\nlevel ' + this.playerDragon.level + '!';
                 GameAudio.sfx.levelUp();
             }
-            this.showText('Defeated the wild\n' + this.enemyDragon.species.name + '!\nGot ' + xp + ' XP!' + lvlMsg, BattlePhase.VICTORY);
+            // Item drop
+            let dropMsg = '';
+            const drop = Inventory.getDropFromBattle(this.enemyDragon.speciesId);
+            if (drop) {
+                Inventory.addItem(drop, 1);
+                const itemName = ITEMS[drop] ? ITEMS[drop].name : drop;
+                dropMsg = '\nFound ' + itemName + '!';
+            }
+
+            this.showText('Defeated the wild\n' + this.enemyDragon.species.name + '!\nGot ' + xp + ' XP!' + lvlMsg + dropMsg, BattlePhase.VICTORY);
             return;
         }
 

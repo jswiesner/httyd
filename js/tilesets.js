@@ -1226,6 +1226,120 @@ const Tilesets = {
             ctx.fillRect(7, 11, 1, 1);
             ctx.fillRect(8, 11, 1, 1);
         });
+        // ── CLOUD ─────────────────────────────────────────────
+        this.makeTile('cloud', (ctx) => {
+            // Transparent sky background
+            ctx.fillStyle = '#b8d0e8';
+            ctx.fillRect(0, 0, 16, 16);
+            // Cloud puffs
+            ctx.fillStyle = '#f0f0f8';
+            ctx.fillRect(2, 6, 12, 6);
+            ctx.fillRect(4, 4, 8, 2);
+            ctx.fillRect(3, 12, 10, 2);
+            ctx.fillStyle = '#e0e4f0';
+            ctx.fillRect(1, 8, 2, 3);
+            ctx.fillRect(13, 7, 2, 4);
+            // Highlights
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(5, 5, 4, 2);
+            ctx.fillRect(3, 7, 3, 2);
+        });
+
+        // ── CLOUD DENSE ──────────────────────────────────────
+        this.makeTile('cloud_dense', (ctx) => {
+            ctx.fillStyle = '#d0dce8';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#e8ecf4';
+            ctx.fillRect(0, 3, 16, 10);
+            ctx.fillRect(2, 1, 12, 2);
+            ctx.fillRect(1, 13, 14, 2);
+            ctx.fillStyle = '#f8f8ff';
+            ctx.fillRect(3, 4, 10, 6);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(4, 5, 6, 3);
+        });
+
+        // ── SKY ──────────────────────────────────────────────
+        this.makeTile('sky', (ctx) => {
+            ctx.fillStyle = '#a0c0e0';
+            ctx.fillRect(0, 0, 16, 16);
+            // Subtle wind streaks
+            ctx.fillStyle = '#b0cce8';
+            ctx.fillRect(2, 4, 6, 1);
+            ctx.fillRect(8, 10, 5, 1);
+        });
+
+        // ── WIND CURRENT (with directional arrows) ──────────
+        this.makeTile('wind_up', (ctx) => {
+            ctx.fillStyle = '#a0c0e0';
+            ctx.fillRect(0, 0, 16, 16);
+            // Upward arrow streaks
+            ctx.fillStyle = '#c8e0f8';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(7, 2, 2, 10);
+            ctx.fillRect(5, 4, 2, 2);
+            ctx.fillRect(9, 4, 2, 2);
+            ctx.fillRect(6, 3, 1, 1);
+            ctx.fillRect(9, 3, 1, 1);
+            ctx.globalAlpha = 1.0;
+        });
+
+        this.makeTile('wind_down', (ctx) => {
+            ctx.fillStyle = '#a0c0e0';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#c8e0f8';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(7, 4, 2, 10);
+            ctx.fillRect(5, 10, 2, 2);
+            ctx.fillRect(9, 10, 2, 2);
+            ctx.fillRect(6, 12, 1, 1);
+            ctx.fillRect(9, 12, 1, 1);
+            ctx.globalAlpha = 1.0;
+        });
+
+        this.makeTile('wind_left', (ctx) => {
+            ctx.fillStyle = '#a0c0e0';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#c8e0f8';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(2, 7, 10, 2);
+            ctx.fillRect(4, 5, 2, 2);
+            ctx.fillRect(4, 9, 2, 2);
+            ctx.fillRect(3, 6, 1, 1);
+            ctx.fillRect(3, 9, 1, 1);
+            ctx.globalAlpha = 1.0;
+        });
+
+        this.makeTile('wind_right', (ctx) => {
+            ctx.fillStyle = '#a0c0e0';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#c8e0f8';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(4, 7, 10, 2);
+            ctx.fillRect(10, 5, 2, 2);
+            ctx.fillRect(10, 9, 2, 2);
+            ctx.fillRect(12, 6, 1, 1);
+            ctx.fillRect(12, 9, 1, 1);
+            ctx.globalAlpha = 1.0;
+        });
+
+        // ── SKY ISLAND GRASS ─────────────────────────────────
+        this.makeTile('sky_grass', (ctx) => {
+            // Floating island grass - lighter, airier green
+            ctx.fillStyle = '#6ab84e';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#5aa842';
+            ctx.fillRect(0, 0, 5, 4);
+            ctx.fillRect(9, 6, 5, 5);
+            ctx.fillStyle = '#7aca5e';
+            ctx.fillRect(6, 1, 3, 3);
+            ctx.fillRect(12, 10, 3, 3);
+            // Sparkle effect (magical floating island)
+            ctx.fillStyle = '#e0f0ff';
+            ctx.fillRect(3, 3, 1, 1);
+            ctx.fillRect(11, 7, 1, 1);
+            ctx.fillRect(7, 12, 1, 1);
+        });
     },
 
     makeTile(id, drawFn) {

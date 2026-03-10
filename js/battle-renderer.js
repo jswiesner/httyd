@@ -9,45 +9,50 @@ const BattleRenderer = {
 
         // Sky gradient
         const skyColors = ['#c8d8e8', '#d0dce8', '#d8e0e8', '#dce4ec', '#e0e8f0'];
+        const skyBandH = Math.ceil(SCREEN_H * 0.14);
         for (let i = 0; i < skyColors.length; i++) {
             ctx.fillStyle = skyColors[i];
-            ctx.fillRect(0, i * 14, SCREEN_W, 14);
+            ctx.fillRect(0, i * skyBandH, SCREEN_W, skyBandH);
         }
+
+        // Ground line
+        const groundY = Math.floor(SCREEN_H * 0.53);
 
         // Distant mountains
         ctx.fillStyle = '#98a8b8';
         ctx.beginPath();
-        ctx.moveTo(0, 60);
-        ctx.lineTo(20, 45);
-        ctx.lineTo(45, 55);
-        ctx.lineTo(70, 40);
-        ctx.lineTo(95, 52);
-        ctx.lineTo(120, 42);
-        ctx.lineTo(145, 50);
-        ctx.lineTo(SCREEN_W, 55);
-        ctx.lineTo(SCREEN_W, 70);
-        ctx.lineTo(0, 70);
+        ctx.moveTo(0, groundY - 10);
+        ctx.lineTo(30, groundY - 25);
+        ctx.lineTo(65, groundY - 15);
+        ctx.lineTo(100, groundY - 30);
+        ctx.lineTo(140, groundY - 18);
+        ctx.lineTo(180, groundY - 28);
+        ctx.lineTo(210, groundY - 20);
+        ctx.lineTo(SCREEN_W, groundY - 15);
+        ctx.lineTo(SCREEN_W, groundY);
+        ctx.lineTo(0, groundY);
         ctx.fill();
 
         // Ground with grass texture
         ctx.fillStyle = '#8aaa78';
-        ctx.fillRect(0, 70, SCREEN_W, 30);
+        ctx.fillRect(0, groundY, SCREEN_W, 30);
         ctx.fillStyle = '#7a9a68';
-        ctx.fillRect(0, 70, SCREEN_W, 2);
-        // Grass detail
+        ctx.fillRect(0, groundY, SCREEN_W, 2);
         ctx.fillStyle = '#9aba88';
         for (let x = 0; x < SCREEN_W; x += 6) {
-            ctx.fillRect(x, 72 + (x % 3), 2, 1);
-            ctx.fillRect(x + 3, 78 + (x % 4), 1, 1);
+            ctx.fillRect(x, groundY + 2 + (x % 3), 2, 1);
+            ctx.fillRect(x + 3, groundY + 8 + (x % 4), 1, 1);
         }
+
+        // Bottom menu area
+        const menuY = SCREEN_H - 48;
 
         // Enemy dragon (top-right area)
         if (be.enemyDragon) {
             const sprite = Sprites.get(be.enemyDragon.speciesId + '_front');
             if (sprite) {
-                let ex = 100;
+                let ex = SCREEN_W - 90;
                 let ey = 8;
-                // Shake during tame attempt
                 if (be.phase === BattlePhase.TAME_ATTEMPT) {
                     ex += Math.sin(Date.now() * 0.02) * 3;
                 }
@@ -55,26 +60,26 @@ const BattleRenderer = {
             }
 
             // Enemy info box (top-left)
-            this.drawInfoBox(ctx, 2, 2, 78, 24, be.enemyDragon, true);
+            this.drawInfoBox(ctx, 2, 2, 90, 24, be.enemyDragon, true);
         }
 
         // Player dragon (bottom-left area)
         if (be.playerDragon) {
             const sprite = Sprites.get(be.playerDragon.speciesId + '_back');
             if (sprite) {
-                ctx.drawImage(sprite, 8, 44);
+                ctx.drawImage(sprite, 12, groundY - 42);
             }
 
             // Player info box (bottom-right)
-            this.drawInfoBox(ctx, 80, 52, 78, 32, be.playerDragon, false);
+            this.drawInfoBox(ctx, SCREEN_W - 100, menuY - 36, 98, 34, be.playerDragon, false);
         }
 
         // Bottom text/menu area
         ctx.fillStyle = COLORS.MENU_BG;
-        ctx.fillRect(0, 96, SCREEN_W, 48);
+        ctx.fillRect(0, menuY, SCREEN_W, 48);
         ctx.strokeStyle = COLORS.MENU_BORDER;
         ctx.lineWidth = 1;
-        ctx.strokeRect(0.5, 96.5, SCREEN_W - 1, 47);
+        ctx.strokeRect(0.5, menuY + 0.5, SCREEN_W - 1, 47);
 
         // Phase-specific rendering
         switch (be.phase) {
@@ -82,37 +87,34 @@ const BattleRenderer = {
             case BattlePhase.VICTORY:
             case BattlePhase.DEFEAT:
             case BattlePhase.RUN:
-                this.renderText(ctx, be.currentText);
+                this.renderText(ctx, be.currentText, menuY);
                 break;
             case BattlePhase.MENU:
-                this.renderMenu(ctx);
+                this.renderMenu(ctx, menuY);
                 break;
             case BattlePhase.MOVE_SELECT:
-                this.renderMoveSelect(ctx);
+                this.renderMoveSelect(ctx, menuY);
                 break;
             case BattlePhase.TAME_ATTEMPT:
-                this.renderTameAttempt(ctx);
+                this.renderTameAttempt(ctx, menuY);
                 break;
             case BattlePhase.PARTY_FULL:
-                this.renderText(ctx, be.currentText);
+                this.renderText(ctx, be.currentText, menuY);
                 break;
         }
     },
 
     drawInfoBox(ctx, x, y, w, h, dragon, isEnemy) {
-        // Box background
         ctx.fillStyle = 'rgba(20, 20, 40, 0.85)';
         ctx.fillRect(x, y, w, h);
         ctx.strokeStyle = COLORS.MENU_BORDER;
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 
-        // Name and level
         const species = DRAGON_SPECIES[dragon.speciesId];
         Sprites.drawText(ctx, species.name, x + 2, y + 2, COLORS.TEXT);
         Sprites.drawText(ctx, 'Lv' + dragon.level, x + w - 20, y + 2, COLORS.TEXT);
 
-        // HP bar
         const barX = x + 2;
         const barY = y + 12;
         const barW = w - 4;
@@ -129,11 +131,8 @@ const BattleRenderer = {
         ctx.fillStyle = barColor;
         ctx.fillRect(barX + 1, barY + 1, Math.floor((barW - 2) * hpRatio), barH - 2);
 
-        // HP numbers for player's dragon
         if (!isEnemy) {
             Sprites.drawText(ctx, dragon.currentHp + '/' + dragon.maxHp, x + 2, y + 18, COLORS.TEXT);
-
-            // XP bar
             const xpBarY = y + 26;
             ctx.fillStyle = '#333';
             ctx.fillRect(barX, xpBarY, barW, 3);
@@ -142,41 +141,37 @@ const BattleRenderer = {
             ctx.fillRect(barX + 1, xpBarY + 1, Math.floor((barW - 2) * xpRatio), 1);
         }
 
-        // Type indicator
         const typeIcon = Sprites.get('type_' + species.type);
         if (typeIcon) {
             ctx.drawImage(typeIcon, x + w - 10, y + 12);
         }
     },
 
-    renderText(ctx, text) {
-        Sprites.drawText(ctx, text || '', 4, 100, COLORS.TEXT);
+    renderText(ctx, text, menuY) {
+        Sprites.drawText(ctx, text || '', 4, menuY + 4, COLORS.TEXT);
 
-        // Blinking continue indicator
         if (BattleEngine._textDone || BattleEngine.phase !== BattlePhase.TEXT) {
             const blink = Math.floor(Date.now() / 400) % 2;
             if (blink) {
                 ctx.fillStyle = COLORS.WHITE;
                 ctx.beginPath();
-                ctx.moveTo(SCREEN_W - 10, 138);
-                ctx.lineTo(SCREEN_W - 6, 138);
-                ctx.lineTo(SCREEN_W - 8, 141);
+                ctx.moveTo(SCREEN_W - 10, SCREEN_H - 10);
+                ctx.lineTo(SCREEN_W - 6, SCREEN_H - 10);
+                ctx.lineTo(SCREEN_W - 8, SCREEN_H - 7);
                 ctx.fill();
             }
         }
     },
 
-    renderMenu(ctx) {
+    renderMenu(ctx, menuY) {
         const actions = ['FIGHT', 'TAME', 'DRAGON', 'RUN'];
         const be = BattleEngine;
 
-        // Info text
-        Sprites.drawText(ctx, 'What will you do?', 4, 100, COLORS.TEXT);
+        Sprites.drawText(ctx, 'What will you do?', 4, menuY + 4, COLORS.TEXT);
 
-        // 2x2 action grid
-        const gridX = 84;
-        const gridY = 110;
-        const cellW = 38;
+        const gridX = SCREEN_W - 80;
+        const gridY = menuY + 14;
+        const cellW = 40;
         const cellH = 14;
 
         for (let i = 0; i < 4; i++) {
@@ -194,14 +189,14 @@ const BattleRenderer = {
         }
     },
 
-    renderMoveSelect(ctx) {
+    renderMoveSelect(ctx, menuY) {
         const be = BattleEngine;
         const moves = be.playerDragon.moves;
 
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i];
             const moveData = MOVES[move.id];
-            const y = 100 + i * 11;
+            const y = menuY + 2 + i * 11;
 
             if (i === be.selectedMove) {
                 ctx.fillStyle = 'rgba(255,255,255,0.15)';
@@ -215,15 +210,14 @@ const BattleRenderer = {
         }
     },
 
-    renderTameAttempt(ctx) {
+    renderTameAttempt(ctx, menuY) {
         const be = BattleEngine;
-        Sprites.drawText(ctx, 'Taming...', 4, 100, COLORS.TEXT);
+        Sprites.drawText(ctx, 'Taming...', 4, menuY + 4, COLORS.TEXT);
 
-        // Draw shake dots
         for (let i = 0; i < be.shakeCount; i++) {
             ctx.fillStyle = COLORS.WHITE;
             ctx.beginPath();
-            ctx.arc(SCREEN_W / 2 - 10 + i * 10, 130, 3, 0, Math.PI * 2);
+            ctx.arc(SCREEN_W / 2 - 10 + i * 10, menuY + 34, 3, 0, Math.PI * 2);
             ctx.fill();
         }
     }

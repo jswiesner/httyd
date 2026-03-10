@@ -35,6 +35,12 @@ const DialogueSystem = {
         if (action === 'healParty') {
             Game.player.healAll();
             GameAudio.sfx.heal();
+        } else if (action === 'openForge') {
+            // Close dialogue first, then open forge
+            this.active = false;
+            Game.popState();
+            MenuSystem.openForge();
+            return;
         }
     },
 

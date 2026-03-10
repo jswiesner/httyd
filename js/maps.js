@@ -31,6 +31,15 @@ const TILE_LOOKUP = {
     'F': { ground: 'waterfall', collision: TILE.SOLID },
     'v': { ground: 'stone_wall', collision: TILE.SOLID },
     'E': { ground: 'tall_grass', collision: TILE.ENCOUNTER_GRASS }, // encounter alias
+    // Sky tiles
+    'c': { ground: 'cloud', collision: TILE.CLOUD },
+    'O': { ground: 'cloud_dense', collision: TILE.CLOUD },
+    'y': { ground: 'sky', collision: TILE.WALKABLE },
+    'U': { ground: 'wind_up', collision: TILE.WIND_UP },
+    'B': { ground: 'wind_down', collision: TILE.WIND_DOWN },
+    '<': { ground: 'wind_left', collision: TILE.WIND_LEFT },
+    '>': { ground: 'wind_right', collision: TILE.WIND_RIGHT },
+    'I': { ground: 'sky_grass', collision: TILE.WALKABLE },
 };
 
 function parseMap(mapStr, width) {
@@ -99,12 +108,17 @@ MAP_DATA.berk_village = (() => {
             { id: 'elder', x: 14, y: 17, spriteId: 'npc_elder', dialogue: 'elder_talk', direction: DIR.DOWN },
             { id: 'child', x: 30, y: 13, spriteId: 'npc_guide', dialogue: 'berk_child', direction: DIR.LEFT },
             { id: 'fisherman', x: 10, y: 8, spriteId: 'npc_trader', dialogue: 'dock_fisherman', direction: DIR.RIGHT },
+            { id: 'gobber', x: 27, y: 17, spriteId: 'npc_chief', dialogue: 'gobber_forge', direction: DIR.DOWN },
+            { id: 'flight_tutor', x: 24, y: 7, spriteId: 'npc_guide', dialogue: 'flight_tutorial', direction: DIR.LEFT },
         ],
         warps: [
             { x: 0, y: 11, targetMap: 'forest_path', targetX: 39, targetY: 14 },
             { x: 0, y: 12, targetMap: 'forest_path', targetX: 39, targetY: 15 },
             { x: 39, y: 28, targetMap: 'dragon_island', targetX: 0, targetY: 19 },
             { x: 39, y: 29, targetMap: 'dragon_island', targetX: 0, targetY: 20 },
+            // Sky Islands flight warp - top edge of map
+            { x: 14, y: 0, targetMap: 'sky_islands', targetX: 14, targetY: 23, flightOnly: true },
+            { x: 15, y: 0, targetMap: 'sky_islands', targetX: 15, targetY: 23, flightOnly: true },
         ],
         playerStart: { x: 18, y: 13 },
     };
@@ -445,3 +459,96 @@ MAP_DATA.dragon_sanctuary = (() => {
         ],
     };
 })();
+
+// --- SKY ISLANDS (30x25) ---
+// Accessible only by flight from Berk Village (fly upward to enter)
+// Contains rare sky dragons, wind puzzles, and hidden areas
+MAP_DATA.sky_islands = (() => {
+    const m = parseMap(
+        'yyyyyyyyyy>>>>>yyyyyyyyyyyyyyy' +
+        'yyyyyyy>IIIIIII<yyyyyycccccyyy' +
+        'yyyyyyy>IIGGGII<yyyyyycOOOcyyy' +
+        'yyyyyyy>IIGGGII<yyyyyycOOOcyyy' +
+        'yyyyyyy>IIGGGII<yyyyyycOOOcyyy' +
+        'yyyyyyy>IIIIIII<yyyyyycccccyyy' +
+        'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy' +
+        'yyyyyyyyyyyyyyUyyyyyyyyyyyyyyy' +
+        'yyyyyyyyyyyyyyUyyyyyyyyyyyyyyy' +
+        'yccccccccyyyyyUyyyyyccccccccyy' +
+        'ycOOOOOOcyyyyUUyyyyycOOOOOOcyy' +
+        'ycOIIIIOcyyyyUUyyyyycOIIIIOcyy' +
+        'ycOIGGIOcyyyyUUyyyyycOIGGIOcyy' +
+        'ycOOOOOOcyyyyUUyyyyycOOOOOOcyy' +
+        'yccccccccyyyyUUyyyyyccccccccyy' +
+        'yyyyyyyyyyyyyUUyyyyyyyyyyyyyyy' +
+        'yyyyyyyyyyyyyUUyyyyyyyyyyyyyyy' +
+        'yyyyy>>>>>>>yyyyyy>>>>>>>yyyyy' +
+        'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy' +
+        'yyy>IIIIIIIIIIII<yyyyyyyyyyyyy' +
+        'yyy>IIGGGGGGGGII<yyyyyyyyyyyyy' +
+        'yyy>IIGGGGGGGGII<yyyyyyyyyyyyy' +
+        'yyy>IIIIIIIIIIII<yyyyyyyyyyyyy' +
+        'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy' +
+        'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
+        30
+    );
+    return {
+        ...m,
+        name: 'Sky Islands',
+        encounterRate: 0.10,
+        encounters: [
+            { dragonId: 'stormcutter', weight: 35, levelRange: [10, 16] },
+            { dragonId: 'light_fury', weight: 20, levelRange: [12, 18] },
+            { dragonId: 'deadly_nadder', weight: 25, levelRange: [8, 14] },
+            { dragonId: 'razorwhip', weight: 20, levelRange: [9, 14] },
+        ],
+        skyEncounters: [
+            { dragonId: 'stormcutter', weight: 40, levelRange: [12, 18] },
+            { dragonId: 'light_fury', weight: 30, levelRange: [14, 20] },
+            { dragonId: 'night_fury', weight: 10, levelRange: [15, 22] },
+            { dragonId: 'deadly_nadder', weight: 20, levelRange: [10, 16] },
+        ],
+        requiresFlight: true,
+        weather: Weather.CLEAR,
+        npcs: [],
+        warps: [
+            { x: 14, y: 24, targetMap: 'berk_village', targetX: 14, targetY: 1, flightOnly: true },
+        ],
+    };
+})();
+
+// Add weather and sky data to existing maps
+MAP_DATA.berk_village.weather = Weather.CLEAR;
+MAP_DATA.berk_village.skyWarp = { targetMap: 'sky_islands', targetX: 14, targetY: 24 };
+
+MAP_DATA.forest_path.weather = Weather.FOG;
+MAP_DATA.mountain_pass.weather = Weather.THUNDERSTORM;
+MAP_DATA.volcanic_caves.weather = Weather.CLEAR;
+MAP_DATA.hidden_world.weather = Weather.FOG;
+MAP_DATA.dragon_island.weather = Weather.CLEAR;
+MAP_DATA.dragon_sanctuary.weather = Weather.CLEAR;
+
+// Item drops from maps (materials found on ground)
+MAP_DATA.volcanic_caves.groundItems = [
+    { itemId: 'iron_ore', x: 15, y: 5 },
+    { itemId: 'iron_ore', x: 25, y: 13 },
+];
+MAP_DATA.dragon_island.groundItems = [
+    { itemId: 'leather', x: 15, y: 10 },
+    { itemId: 'dragon_scales', x: 25, y: 7 },
+];
+MAP_DATA.dragon_sanctuary.groundItems = [
+    { itemId: 'dragon_scales', x: 8, y: 6 },
+    { itemId: 'dragon_scales', x: 20, y: 18 },
+];
+MAP_DATA.mountain_pass.groundItems = [
+    { itemId: 'iron_ore', x: 10, y: 15 },
+    { itemId: 'leather', x: 20, y: 20 },
+];
+MAP_DATA.forest_path.groundItems = [
+    { itemId: 'leather', x: 20, y: 10 },
+];
+MAP_DATA.hidden_world.groundItems = [
+    { itemId: 'tail_fin_blueprint', x: 18, y: 12 },
+    { itemId: 'dragon_scales', x: 10, y: 8 },
+];
