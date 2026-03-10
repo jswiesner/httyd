@@ -300,7 +300,7 @@ const MenuSystem = {
 
         if (party.length === 0) {
             Sprites.drawText(ctx, 'No dragons yet!', 40, 66, COLORS.GRAY);
-            Sprites.drawText(ctx, 'X:BACK', 60, SCREEN_H - 14, COLORS.GRAY);
+            Sprites.drawText(ctx, 'B:BACK', 60, SCREEN_H - 14, COLORS.GRAY);
             return;
         }
 
@@ -452,7 +452,7 @@ const MenuSystem = {
         if (party.length > 1) {
             Sprites.drawText(ctx, 'U/D:SWITCH', 6, SCREEN_H - 10, COLORS.GRAY);
         }
-        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+        Sprites.drawText(ctx, 'B:BACK', SCREEN_W - Sprites.textWidth('B:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
 
         ctx.fillStyle = typeColor;
         ctx.fillRect(2, SCREEN_H - 4, SCREEN_W - 4, 2);
@@ -488,9 +488,7 @@ const MenuSystem = {
                 if (selected) {
                     ctx.fillStyle = 'rgba(255,255,255,0.15)';
                     ctx.fillRect(4, y - 1, SCREEN_W - 8, lineH);
-                    // Blinking cursor arrow
-                    const blink = Math.floor(Date.now() / 300) % 2;
-                    Sprites.drawText(ctx, '>', 4 + (blink ? 1 : 0), y, '#e8a030');
+                    Sprites.drawText(ctx, '>', 4, y, '#e8a030');
                 }
 
                 const nameColor = item.isSaddle ? '#e8d040' : (selected ? COLORS.WHITE : COLORS.TEXT);
@@ -506,12 +504,12 @@ const MenuSystem = {
                 Sprites.drawText(ctx, desc, 6, SCREEN_H - 22, COLORS.GRAY);
 
                 if (allItems[this.selectedBagItem].isSaddle) {
-                    Sprites.drawText(ctx, 'Z:EQUIP', 6, SCREEN_H - 10, COLORS.TEXT);
+                    Sprites.drawText(ctx, 'A:EQUIP', 6, SCREEN_H - 10, COLORS.TEXT);
                 }
             }
         }
 
-        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+        Sprites.drawText(ctx, 'B:BACK', SCREEN_W - Sprites.textWidth('B:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
     },
 
     renderForge(ctx) {
@@ -558,8 +556,8 @@ const MenuSystem = {
 
         ctx.fillStyle = COLORS.GRAY;
         ctx.fillRect(4, SCREEN_H - 14, SCREEN_W - 8, 1);
-        Sprites.drawText(ctx, 'Z:CRAFT', 6, SCREEN_H - 10, COLORS.TEXT);
-        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+        Sprites.drawText(ctx, 'A:CRAFT', 6, SCREEN_H - 10, COLORS.TEXT);
+        Sprites.drawText(ctx, 'B:BACK', SCREEN_W - Sprites.textWidth('B:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
     },
 
     renderEquip(ctx) {
@@ -595,8 +593,8 @@ const MenuSystem = {
             }
         }
 
-        Sprites.drawText(ctx, 'Z:EQUIP', 6, SCREEN_H - 10, COLORS.TEXT);
-        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+        Sprites.drawText(ctx, 'A:EQUIP', 6, SCREEN_H - 10, COLORS.TEXT);
+        Sprites.drawText(ctx, 'B:BACK', SCREEN_W - Sprites.textWidth('B:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
     },
 
     openForge() {
@@ -770,10 +768,10 @@ const MenuSystem = {
         ctx.fillStyle = COLORS.GRAY;
         ctx.fillRect(4, SCREEN_H - 14, SCREEN_W - 8, 1);
 
-        const actionLabel = this.sanctuaryTab === 0 ? 'Z:DEPOSIT' : 'Z:WITHDRAW';
+        const actionLabel = this.sanctuaryTab === 0 ? 'A:DEPOSIT' : 'A:WITHDRAW';
         Sprites.drawText(ctx, actionLabel, 6, SCREEN_H - 10, COLORS.TEXT);
         Sprites.drawText(ctx, 'L/R:TAB', SCREEN_W / 2 - 16, SCREEN_H - 10, COLORS.GRAY);
-        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
+        Sprites.drawText(ctx, 'B:BACK', SCREEN_W - Sprites.textWidth('B:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
     },
 
     getTypeColor(type) {

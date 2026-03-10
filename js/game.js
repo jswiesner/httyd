@@ -186,7 +186,7 @@ const Game = {
 
         // Footer
         if (blink) {
-            const footerText = 'PRESS Z TO START';
+            const footerText = 'PRESS A TO START';
             Sprites.drawText(ctx, footerText, Math.floor((SCREEN_W - Sprites.textWidth(footerText)) / 2), SCREEN_H - 12, COLORS.GRAY);
         }
     },
