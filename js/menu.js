@@ -483,15 +483,18 @@ const MenuSystem = {
             for (let i = 0; i < Math.min(allItems.length, maxVisible); i++) {
                 const item = allItems[i];
                 const y = startY + i * lineH;
+                const selected = i === this.selectedBagItem;
 
-                if (i === this.selectedBagItem) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                if (selected) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.15)';
                     ctx.fillRect(4, y - 1, SCREEN_W - 8, lineH);
-                    Sprites.drawText(ctx, '>', 6, y, COLORS.WHITE);
+                    // Blinking cursor arrow
+                    const blink = Math.floor(Date.now() / 300) % 2;
+                    Sprites.drawText(ctx, '>', 4 + (blink ? 1 : 0), y, '#e8a030');
                 }
 
-                const nameColor = item.isSaddle ? '#e8d040' : COLORS.TEXT;
-                Sprites.drawText(ctx, item.name, 16, y, nameColor);
+                const nameColor = item.isSaddle ? '#e8d040' : (selected ? COLORS.WHITE : COLORS.TEXT);
+                Sprites.drawText(ctx, item.name, 14, y, nameColor);
                 Sprites.drawText(ctx, 'x' + item.count, SCREEN_W - 24, y, COLORS.GRAY);
             }
 

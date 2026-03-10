@@ -1,6 +1,6 @@
-// Canvas and rendering - GBA-like widescreen resolution
+// Canvas and rendering - tall portrait resolution for mobile
 const SCREEN_W = 240;
-const SCREEN_H = 160;
+const SCREEN_H = 288;
 const TILE_SIZE = 16;
 const TICK_RATE = 1 / 60;
 

@@ -154,20 +154,21 @@ const Game = {
             if (twinkle) ctx.fillRect(x, y, 1, 1);
         }
 
-        // Title text - centered
+        // Title text - vertically centered
+        const titleBaseY = Math.floor(SCREEN_H * 0.08);
         const title1 = 'HOW TO TRAIN';
         const title2 = 'YOUR DRAGON';
-        Sprites.drawText(ctx, title1, Math.floor((SCREEN_W - Sprites.textWidth(title1)) / 2), 20, '#e8a030');
-        Sprites.drawText(ctx, title2, Math.floor((SCREEN_W - Sprites.textWidth(title2)) / 2), 32, '#e8a030');
+        Sprites.drawText(ctx, title1, Math.floor((SCREEN_W - Sprites.textWidth(title1)) / 2), titleBaseY, '#e8a030');
+        Sprites.drawText(ctx, title2, Math.floor((SCREEN_W - Sprites.textWidth(title2)) / 2), titleBaseY + 12, '#e8a030');
 
         // Draw a Night Fury silhouette - centered
         const dragonSprite = Sprites.get('night_fury_front');
         if (dragonSprite) {
-            ctx.drawImage(dragonSprite, Math.floor((SCREEN_W - 48) / 2), 48);
+            ctx.drawImage(dragonSprite, Math.floor((SCREEN_W - 48) / 2), titleBaseY + 30);
         }
 
         // Menu options
-        const menuY = 110;
+        const menuY = Math.floor(SCREEN_H * 0.45);
         const blink = Math.floor(this.titleBlink * 2) % 2;
 
         const options = ['NEW GAME'];
@@ -194,6 +195,14 @@ const Game = {
     updateOverworld(dt) {
         if (!this.player || !this.currentMap) return;
 
+        // Capture input and moving state BEFORE player.update, because
+        // update immediately starts a new step when D-pad is held, making
+        // moving=true and preventing F/Z/X from ever firing on mobile
+        const wasF = Input.wasPressed('f');
+        const wasConfirm = Input.confirm();
+        const wasCancel = Input.cancel();
+        const wasStill = !this.player.moving;
+
         this.player.update(dt, this.currentMap);
         CompanionSystem.update(dt, this.player);
 
@@ -207,17 +216,17 @@ const Game = {
         WeatherSystem.update(dt);
 
         // Toggle flight mode with F key
-        if (Input.wasPressed('f') && !this.player.moving) {
+        if (wasF && wasStill) {
             this.player.toggleFlight();
         }
 
         // Check for NPC interaction
-        if (Input.confirm() && !this.player.moving) {
+        if (wasConfirm && wasStill) {
             this.player.tryInteract();
         }
 
         // Open menu
-        if (Input.cancel() && !this.player.moving) {
+        if (wasCancel && wasStill) {
             MenuSystem.open();
         }
     },
