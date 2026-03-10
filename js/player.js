@@ -6,6 +6,7 @@ class Player extends Entity {
         this.moveSpeed = 0.13;
         this.isFlying = false;
         this.flightBobTimer = 0;
+        this.hasFlownBefore = false;
     }
 
     update(dt, map) {
@@ -163,14 +164,17 @@ class Player extends Entity {
 
             GameAudio.sfx.confirm();
 
-            // Check if map has a sky warp (fly up to sky islands)
-            if (map.skyWarp) {
-                DialogueSystem.start([
-                    { text: "You take flight!\nPress F to land.\n" },
-                    { text: "Fly to the clouds\nabove to reach the\nSky Islands!" },
-                ]);
-            } else {
-                DialogueSystem.start([{ text: "You take flight!\nPress F to land." }]);
+            // Show tutorial dialogue only the first time
+            if (!this.hasFlownBefore) {
+                this.hasFlownBefore = true;
+                if (map.skyWarp) {
+                    DialogueSystem.start([
+                        { text: "You take flight!\nPress F to land.\n" },
+                        { text: "Fly to the clouds\nabove to reach the\nSky Islands!" },
+                    ]);
+                } else {
+                    DialogueSystem.start([{ text: "You take flight!\nPress F to land." }]);
+                }
             }
         } else {
             // Land - check if current tile allows landing
