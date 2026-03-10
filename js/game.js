@@ -148,7 +148,7 @@ const Game = {
 
         // Stars
         ctx.fillStyle = '#ffffff';
-        const starPositions = [[10,8],[35,15],[60,5],[90,12],[105,25],[25,30],[72,22],[115,8],[48,18],[85,28],[135,10],[155,20],[168,6],[130,30],[160,15]];
+        const starPositions = [[10,8],[38,15],[65,5],[95,12],[115,25],[28,30],[78,22],[125,8],[52,18],[90,28],[145,10],[168,20],[182,6],[140,30],[175,15]];
         for (const [x, y] of starPositions) {
             const twinkle = Math.sin(Date.now() * 0.003 + x * 0.1) > 0;
             if (twinkle) ctx.fillRect(x, y, 1, 1);

@@ -1,6 +1,6 @@
-// Canvas and rendering - portrait resolution (2x scaled to 360x640)
-const SCREEN_W = 180;
-const SCREEN_H = 320;
+// Canvas and rendering - portrait resolution (2x scaled to 390x720)
+const SCREEN_W = 195;
+const SCREEN_H = 360;
 const TILE_SIZE = 16;
 const TICK_RATE = 1 / 60;
 
