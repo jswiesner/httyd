@@ -10,6 +10,9 @@ const MenuSystem = {
     selectedRecipe: 0,
     equipMode: false,
     selectedEquipDragon: 0,
+    sanctuaryMode: false,
+    sanctuaryTab: 0, // 0=party(deposit), 1=stored(withdraw)
+    sanctuarySelected: 0,
 
     open() {
         this.active = true;
@@ -17,6 +20,7 @@ const MenuSystem = {
         this.subMenu = null;
         this.forgeMode = false;
         this.equipMode = false;
+        this.sanctuaryMode = false;
         GameAudio.sfx.menuOpen();
         Game.pushState(GameState.MENU);
     },
@@ -26,11 +30,17 @@ const MenuSystem = {
         this.subMenu = null;
         this.forgeMode = false;
         this.equipMode = false;
+        this.sanctuaryMode = false;
         Game.popState();
     },
 
     update(dt) {
         if (!this.active) return;
+
+        if (this.sanctuaryMode) {
+            this.updateSanctuary();
+            return;
+        }
 
         if (this.forgeMode) {
             this.updateForge();
@@ -232,6 +242,11 @@ const MenuSystem = {
 
     render(ctx) {
         if (!this.active) return;
+
+        if (this.sanctuaryMode) {
+            this.renderSanctuary(ctx);
+            return;
+        }
 
         if (this.forgeMode) {
             this.renderForge(ctx);
@@ -587,6 +602,175 @@ const MenuSystem = {
         this.selectedRecipe = 0;
         GameAudio.sfx.menuOpen();
         Game.pushState(GameState.MENU);
+    },
+
+    openSanctuary() {
+        this.active = true;
+        this.sanctuaryMode = true;
+        this.sanctuaryTab = 0;
+        this.sanctuarySelected = 0;
+        GameAudio.sfx.menuOpen();
+        Game.pushState(GameState.MENU);
+    },
+
+    updateSanctuary() {
+        if (Input.cancel()) {
+            this.sanctuaryMode = false;
+            this.close();
+            GameAudio.sfx.cancel();
+            return;
+        }
+
+        // Switch tabs with left/right
+        if (Input.wasPressed('arrowleft') || Input.wasPressed('a')) {
+            if (this.sanctuaryTab !== 0) {
+                this.sanctuaryTab = 0;
+                this.sanctuarySelected = 0;
+                GameAudio.sfx.select();
+            }
+        }
+        if (Input.wasPressed('arrowright') || Input.wasPressed('d')) {
+            if (this.sanctuaryTab !== 1) {
+                this.sanctuaryTab = 1;
+                this.sanctuarySelected = 0;
+                GameAudio.sfx.select();
+            }
+        }
+
+        const list = this.sanctuaryTab === 0 ? Game.player.party : Sanctuary.stored;
+
+        if (Input.wasPressed('arrowup') || Input.wasPressed('w')) {
+            if (this.sanctuarySelected > 0) { this.sanctuarySelected--; GameAudio.sfx.select(); }
+        }
+        if (Input.wasPressed('arrowdown') || Input.wasPressed('s')) {
+            if (this.sanctuarySelected < list.length - 1) { this.sanctuarySelected++; GameAudio.sfx.select(); }
+        }
+
+        if (Input.confirm() && list.length > 0) {
+            if (this.sanctuaryTab === 0) {
+                // Deposit from party
+                if (Game.player.party.length <= 1) {
+                    GameAudio.sfx.bump();
+                    DialogueSystem.start([{ text: "You must keep at\nleast one dragon\nwith you!" }]);
+                    this.sanctuaryMode = false;
+                    this.active = false;
+                    // Don't pop state - dialogue pushed its own
+                    return;
+                }
+                if (Sanctuary.stored.length >= Sanctuary.maxStorage) {
+                    GameAudio.sfx.bump();
+                    DialogueSystem.start([{ text: "The sanctuary is\nfull! No more room." }]);
+                    this.sanctuaryMode = false;
+                    this.active = false;
+                    return;
+                }
+                const dragon = Game.player.party[this.sanctuarySelected];
+                if (Sanctuary.deposit(dragon, this.sanctuarySelected)) {
+                    GameAudio.sfx.confirm();
+                    if (this.sanctuarySelected >= Game.player.party.length) {
+                        this.sanctuarySelected = Math.max(0, Game.player.party.length - 1);
+                    }
+                }
+            } else {
+                // Withdraw from sanctuary
+                if (Game.player.party.length >= MAX_PARTY) {
+                    GameAudio.sfx.bump();
+                    DialogueSystem.start([{ text: "Your party is full!\nDeposit a dragon\nfirst." }]);
+                    this.sanctuaryMode = false;
+                    this.active = false;
+                    return;
+                }
+                if (Sanctuary.withdraw(this.sanctuarySelected)) {
+                    GameAudio.sfx.confirm();
+                    if (this.sanctuarySelected >= Sanctuary.stored.length) {
+                        this.sanctuarySelected = Math.max(0, Sanctuary.stored.length - 1);
+                    }
+                }
+            }
+        }
+    },
+
+    renderSanctuary(ctx) {
+        ctx.fillStyle = COLORS.MENU_BG;
+        ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+        ctx.strokeStyle = COLORS.MENU_BORDER;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(1.5, 1.5, SCREEN_W - 3, SCREEN_H - 3);
+
+        Sprites.drawText(ctx, 'DRAGON SANCTUARY', 6, 6, '#40c870');
+        ctx.fillStyle = '#40c870';
+        ctx.fillRect(4, 14, SCREEN_W - 8, 1);
+
+        // Tab headers
+        const tabY = 18;
+        const tabW = Math.floor((SCREEN_W - 12) / 2);
+        const tabs = ['PARTY', 'STORED'];
+        for (let i = 0; i < 2; i++) {
+            const tx = 4 + i * (tabW + 4);
+            ctx.fillStyle = i === this.sanctuaryTab ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0)';
+            ctx.fillRect(tx, tabY, tabW, 12);
+            const tabColor = i === this.sanctuaryTab ? COLORS.WHITE : COLORS.GRAY;
+            const tabLabel = tabs[i] + (i === 0 ? ' (' + Game.player.party.length + ')' : ' (' + Sanctuary.stored.length + '/' + Sanctuary.maxStorage + ')');
+            Sprites.drawText(ctx, tabLabel, tx + 4, tabY + 2, tabColor);
+        }
+
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.fillRect(4, tabY + 14, SCREEN_W - 8, 1);
+
+        // Dragon list
+        const listY = tabY + 18;
+        const lineH = 18;
+        const list = this.sanctuaryTab === 0 ? Game.player.party : Sanctuary.stored;
+
+        if (list.length === 0) {
+            const emptyMsg = this.sanctuaryTab === 0 ? 'No dragons in party!' : 'No dragons stored!';
+            Sprites.drawText(ctx, emptyMsg, 6, listY + 10, COLORS.GRAY);
+        } else {
+            const maxVisible = Math.floor((SCREEN_H - listY - 16) / lineH);
+            for (let i = 0; i < Math.min(list.length, maxVisible); i++) {
+                const dragon = list[i];
+                const y = listY + i * lineH;
+
+                if (i === this.sanctuarySelected) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                    ctx.fillRect(4, y - 1, SCREEN_W - 8, lineH);
+                    Sprites.drawText(ctx, '>', 6, y + 2, COLORS.WHITE);
+                }
+
+                const typeColor = this.getTypeColor(dragon.species.type);
+                ctx.fillStyle = typeColor;
+                ctx.fillRect(16, y + 3, 4, 4);
+
+                Sprites.drawText(ctx, dragon.species.name, 24, y + 2, COLORS.TEXT);
+                Sprites.drawText(ctx, 'Lv' + dragon.level, SCREEN_W - 40, y + 2, COLORS.GRAY);
+
+                // Mini HP bar
+                const hpBarX = 24;
+                const hpBarY = y + 11;
+                const hpBarW = 60;
+                const hpRatio = dragon.maxHp > 0 ? dragon.currentHp / dragon.maxHp : 0;
+                ctx.fillStyle = COLORS.BLACK;
+                ctx.fillRect(hpBarX, hpBarY, hpBarW, 3);
+                let barColor = COLORS.HP_GREEN;
+                if (hpRatio < 0.5) barColor = COLORS.HP_YELLOW;
+                if (hpRatio < 0.2) barColor = COLORS.HP_RED;
+                ctx.fillStyle = barColor;
+                ctx.fillRect(hpBarX + 1, hpBarY + 1, Math.floor((hpBarW - 2) * hpRatio), 1);
+
+                if (dragon.saddle) {
+                    Sprites.drawText(ctx, 'S', SCREEN_W - 20, y + 2, '#e8d040');
+                }
+            }
+        }
+
+        // Footer
+        ctx.fillStyle = COLORS.GRAY;
+        ctx.fillRect(4, SCREEN_H - 14, SCREEN_W - 8, 1);
+
+        const actionLabel = this.sanctuaryTab === 0 ? 'Z:DEPOSIT' : 'Z:WITHDRAW';
+        Sprites.drawText(ctx, actionLabel, 6, SCREEN_H - 10, COLORS.TEXT);
+        Sprites.drawText(ctx, 'L/R:TAB', SCREEN_W / 2 - 16, SCREEN_H - 10, COLORS.GRAY);
+        Sprites.drawText(ctx, 'X:BACK', SCREEN_W - Sprites.textWidth('X:BACK') - 6, SCREEN_H - 10, COLORS.GRAY);
     },
 
     getTypeColor(type) {

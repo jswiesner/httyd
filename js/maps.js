@@ -110,6 +110,8 @@ MAP_DATA.berk_village = (() => {
             { id: 'fisherman', x: 10, y: 8, spriteId: 'npc_trader', dialogue: 'dock_fisherman', direction: DIR.RIGHT },
             { id: 'gobber', x: 27, y: 17, spriteId: 'npc_chief', dialogue: 'gobber_forge', direction: DIR.DOWN },
             { id: 'flight_tutor', x: 24, y: 7, spriteId: 'npc_guide', dialogue: 'flight_tutorial', direction: DIR.LEFT },
+            { id: 'sanctuary_keeper', x: 34, y: 18, spriteId: 'npc_elder', dialogue: 'sanctuary_keeper', direction: DIR.LEFT },
+            { id: 'snotlout', x: 35, y: 13, spriteId: 'npc_trainer', dialogue: 'trainer_snotlout', trainerId: 'snotlout', direction: DIR.DOWN },
         ],
         warps: [
             { x: 0, y: 11, targetMap: 'forest_path', targetX: 39, targetY: 14 },
@@ -176,6 +178,7 @@ MAP_DATA.forest_path = (() => {
         ],
         npcs: [
             { id: 'forest_guide', x: 8, y: 17, spriteId: 'npc_guide', dialogue: 'forest_guide', direction: DIR.RIGHT },
+            { id: 'tuffnut', x: 25, y: 10, spriteId: 'npc_trainer', dialogue: 'trainer_tuffnut', trainerId: 'tuffnut', direction: DIR.LEFT },
         ],
         warps: [
             { x: 39, y: 14, targetMap: 'berk_village', targetX: 1, targetY: 11 },
@@ -234,7 +237,9 @@ MAP_DATA.dragon_island = (() => {
             { dragonId: 'gronckle', weight: 20, levelRange: [5, 8] },
             { dragonId: 'terrible_terror', weight: 10, levelRange: [4, 7] },
         ],
-        npcs: [],
+        npcs: [
+            { id: 'astrid', x: 20, y: 8, spriteId: 'npc_trainer', dialogue: 'trainer_astrid', trainerId: 'astrid', direction: DIR.DOWN },
+        ],
         warps: [
             { x: 0, y: 19, targetMap: 'berk_village', targetX: 38, targetY: 28 },
             { x: 0, y: 20, targetMap: 'berk_village', targetX: 38, targetY: 29 },
@@ -295,6 +300,7 @@ MAP_DATA.mountain_pass = (() => {
         ],
         npcs: [
             { id: 'mountain_guide', x: 10, y: 9, spriteId: 'npc_guide', dialogue: 'mountain_guide', direction: DIR.DOWN },
+            { id: 'eret', x: 18, y: 18, spriteId: 'npc_trainer', dialogue: 'trainer_eret', trainerId: 'eret', direction: DIR.UP },
         ],
         warps: [
             { x: 29, y: 28, targetMap: 'forest_path', targetX: 1, targetY: 14 },
@@ -401,6 +407,7 @@ MAP_DATA.hidden_world = (() => {
         ],
         npcs: [
             { id: 'hidden_guide', x: 6, y: 3, spriteId: 'npc_elder', dialogue: 'hidden_guide', direction: DIR.DOWN },
+            { id: 'drago', x: 18, y: 14, spriteId: 'npc_trainer', dialogue: 'trainer_drago', trainerId: 'drago', direction: DIR.DOWN },
         ],
         warps: [
             { x: 1, y: 2, targetMap: 'mountain_pass', targetX: 28, targetY: 33 },
@@ -452,6 +459,7 @@ MAP_DATA.dragon_sanctuary = (() => {
         ],
         npcs: [
             { id: 'sanctuary_guide', x: 10, y: 12, spriteId: 'npc_elder', dialogue: 'sanctuary_guide', direction: DIR.DOWN },
+            { id: 'valka', x: 8, y: 6, spriteId: 'npc_trainer', dialogue: 'trainer_valka', trainerId: 'valka', direction: DIR.RIGHT },
         ],
         warps: [
             { x: 0, y: 12, targetMap: 'volcanic_caves', targetX: 33, targetY: 21 },

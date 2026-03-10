@@ -36,10 +36,19 @@ const DialogueSystem = {
             Game.player.healAll();
             GameAudio.sfx.heal();
         } else if (action === 'openForge') {
-            // Close dialogue first, then open forge
             this.active = false;
             Game.popState();
             MenuSystem.openForge();
+            return;
+        } else if (action === 'openSanctuary') {
+            this.active = false;
+            Game.popState();
+            MenuSystem.openSanctuary();
+            return;
+        } else if (typeof action === 'object' && action.type === 'trainerBattle') {
+            this.active = false;
+            Game.popState();
+            Game.startTrainerBattle(action.trainer);
             return;
         }
     },

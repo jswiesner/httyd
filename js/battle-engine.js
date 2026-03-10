@@ -16,11 +16,40 @@ const BattleEngine = {
     pendingPlayerMove: null,
     switchIndex: -1,
     releaseIndex: -1,
+    isTrainerBattle: false,
+    trainerName: '',
+    trainerPostDialogue: null,
+    trainerParty: null,
+    trainerPartyIndex: 0,
 
     start(wildDragon) {
         this.enemyDragon = wildDragon;
+        this.isTrainerBattle = false;
+        this.trainerName = '';
+        this.trainerPostDialogue = null;
+        this.trainerParty = null;
+        this.trainerPartyIndex = 0;
+        this._initPlayerDragon();
+        this.showText('A wild ' + this.enemyDragon.species.name + ' appeared!', BattlePhase.MENU);
+    },
+
+    startTrainer(trainerData) {
+        this.isTrainerBattle = true;
+        this.trainerName = trainerData.name;
+        this._currentTrainerId = trainerData.id || null;
+        this.trainerPostDialogue = trainerData.postDialogue || null;
+        this.trainerParty = trainerData.party.map(d => createDragonInstance(d.speciesId, d.level));
+        this.trainerPartyIndex = 0;
+        this.enemyDragon = this.trainerParty[0];
+        this._initPlayerDragon();
+        this.showText(this.trainerName + ' challenges\nyou to a battle!', BattlePhase.TEXT);
+        this._nextPhase = BattlePhase.TEXT;
+        // Queue the dragon intro text
+        this._trainerIntroQueued = true;
+    },
+
+    _initPlayerDragon() {
         this.playerDragonIndex = 0;
-        // Find first alive dragon
         for (let i = 0; i < Game.player.party.length; i++) {
             if (Game.player.party[i].currentHp > 0) {
                 this.playerDragonIndex = i;
@@ -33,7 +62,6 @@ const BattleEngine = {
         this.selectedMove = 0;
         this.switchIndex = -1;
         this.textQueue = [];
-        this.showText('A wild ' + this.enemyDragon.species.name + ' appeared!', BattlePhase.MENU);
     },
 
     showText(text, nextPhase) {
@@ -105,6 +133,11 @@ const BattleEngine = {
             }
         } else {
             if (Input.confirm()) {
+                if (this._trainerIntroQueued) {
+                    this._trainerIntroQueued = false;
+                    this.showText(this.trainerName + ' sends out\n' + this.enemyDragon.species.name + '!', BattlePhase.MENU);
+                    return;
+                }
                 this.phase = this._nextPhase;
             }
         }
@@ -133,7 +166,11 @@ const BattleEngine = {
                     this.phase = BattlePhase.MOVE_SELECT;
                     break;
                 case 1: // TAME
-                    this.attemptTame();
+                    if (this.isTrainerBattle) {
+                        this.showText("Can't tame a\ntrainer's dragon!", BattlePhase.MENU);
+                    } else {
+                        this.attemptTame();
+                    }
                     break;
                 case 2: // DRAGON (switch)
                     if (Game.player.party.length > 1) {
@@ -150,7 +187,11 @@ const BattleEngine = {
                     }
                     break;
                 case 3: // RUN
-                    this.attemptRun();
+                    if (this.isTrainerBattle) {
+                        this.showText("Can't run from\na trainer battle!", BattlePhase.MENU);
+                    } else {
+                        this.attemptRun();
+                    }
                     break;
             }
         }
@@ -327,35 +368,52 @@ const BattleEngine = {
     },
 
     updatePartyFull() {
-        // Show release prompt
-        this.currentText = 'Release which dragon?\n';
+        // Show options: Release a dragon, Send to Sanctuary, or Cancel
+        this.currentText = 'Party full! What now?\n';
+        const options = [];
         for (let i = 0; i < Game.player.party.length; i++) {
-            const prefix = i === this.releaseIndex ? '> ' : '  ';
-            this.currentText += prefix + Game.player.party[i].species.name + '\n';
+            options.push('Release ' + Game.player.party[i].species.name);
         }
-        const cancelPrefix = this.releaseIndex === -1 ? '> ' : '  ';
-        this.currentText += cancelPrefix + 'Cancel';
+        if (Sanctuary.stored.length < Sanctuary.maxStorage) {
+            options.push('Send to Sanctuary');
+        }
+        options.push('Cancel');
+
+        // releaseIndex: 0..party.length-1 = release, party.length = sanctuary, last = cancel
+        const sanctuaryIdx = Sanctuary.stored.length < Sanctuary.maxStorage ? Game.player.party.length : -1;
+        const cancelIdx = sanctuaryIdx >= 0 ? sanctuaryIdx + 1 : Game.player.party.length;
+
+        for (let i = 0; i < options.length; i++) {
+            const prefix = i === this.releaseIndex ? '> ' : '  ';
+            this.currentText += prefix + options[i] + '\n';
+        }
         this._textDone = true;
 
         if (Input.wasPressed('arrowup') || Input.wasPressed('w')) {
             this.releaseIndex--;
-            if (this.releaseIndex < -1) this.releaseIndex = Game.player.party.length - 1;
+            if (this.releaseIndex < 0) this.releaseIndex = options.length - 1;
             GameAudio.sfx.select();
         }
         if (Input.wasPressed('arrowdown') || Input.wasPressed('s')) {
             this.releaseIndex++;
-            if (this.releaseIndex >= Game.player.party.length) this.releaseIndex = -1;
+            if (this.releaseIndex >= options.length) this.releaseIndex = 0;
             GameAudio.sfx.select();
         }
         if (Input.confirm()) {
-            if (this.releaseIndex >= 0) {
+            if (this.releaseIndex >= 0 && this.releaseIndex < Game.player.party.length) {
+                // Release a party dragon and add tamed one
                 const released = Game.player.party[this.releaseIndex];
                 Game.player.removeFromParty(this.releaseIndex);
                 Game.player.addToParty(this.enemyDragon);
                 GameAudio.sfx.confirm();
                 this.showText('Released ' + released.species.name + '.\n' + this.enemyDragon.species.name + '\njoined your party!', BattlePhase.VICTORY);
+            } else if (this.releaseIndex === sanctuaryIdx) {
+                // Send tamed dragon to sanctuary
+                Sanctuary.storeDirectly(this.enemyDragon);
+                GameAudio.sfx.confirm();
+                this.showText(this.enemyDragon.species.name + ' was\nsent to the Dragon\nSanctuary!', BattlePhase.VICTORY);
             } else {
-                // Cancel - just end without taming
+                // Cancel
                 this.showText('You let the\n' + this.enemyDragon.species.name + ' go.', BattlePhase.VICTORY);
             }
             this.releaseIndex = -1;
@@ -378,30 +436,40 @@ const BattleEngine = {
 
     checkBattleEnd() {
         if (this.enemyDragon.currentHp <= 0) {
-            // Victory
-            GameAudio.sfx.victory();
-            const xp = this.enemyDragon.species.xpYield;
-            this.playerDragon.xp += xp;
-            let lvlMsg = '';
-            // Check level up
-            while (this.playerDragon.xp >= this.playerDragon.xpToNext) {
-                this.playerDragon.xp -= this.playerDragon.xpToNext;
-                this.playerDragon.level++;
-                recalcStats(this.playerDragon);
-                this.playerDragon.xpToNext = Math.floor(50 * Math.pow(1.2, this.playerDragon.level - 1));
-                lvlMsg = '\n' + this.playerDragon.species.name + ' grew to\nlevel ' + this.playerDragon.level + '!';
-                GameAudio.sfx.levelUp();
-            }
-            // Item drop
-            let dropMsg = '';
-            const drop = Inventory.getDropFromBattle(this.enemyDragon.speciesId);
-            if (drop) {
-                Inventory.addItem(drop, 1);
-                const itemName = ITEMS[drop] ? ITEMS[drop].name : drop;
-                dropMsg = '\nFound ' + itemName + '!';
+            // Trainer battle: check if trainer has more dragons
+            if (this.isTrainerBattle && this.trainerParty) {
+                this.trainerPartyIndex++;
+                if (this.trainerPartyIndex < this.trainerParty.length) {
+                    // Award XP for this dragon
+                    const xp = this.enemyDragon.species.xpYield;
+                    this.playerDragon.xp += xp;
+                    this._checkLevelUp();
+                    // Send out next trainer dragon
+                    this.enemyDragon = this.trainerParty[this.trainerPartyIndex];
+                    this.showText(this.trainerName + ' sends out\n' + this.enemyDragon.species.name + '!', BattlePhase.MENU);
+                    return;
+                }
             }
 
-            this.showText('Defeated the wild\n' + this.enemyDragon.species.name + '!\nGot ' + xp + ' XP!' + lvlMsg + dropMsg, BattlePhase.VICTORY);
+            // Victory
+            GameAudio.sfx.victory();
+            const xp = this.isTrainerBattle ? Math.floor(this.enemyDragon.species.xpYield * 1.5) : this.enemyDragon.species.xpYield;
+            this.playerDragon.xp += xp;
+            let lvlMsg = this._checkLevelUp();
+
+            // Item drop (no drops from trainer battles)
+            let dropMsg = '';
+            if (!this.isTrainerBattle) {
+                const drop = Inventory.getDropFromBattle(this.enemyDragon.speciesId);
+                if (drop) {
+                    Inventory.addItem(drop, 1);
+                    const itemName = ITEMS[drop] ? ITEMS[drop].name : drop;
+                    dropMsg = '\nFound ' + itemName + '!';
+                }
+            }
+
+            const prefix = this.isTrainerBattle ? 'Defeated ' + this.trainerName + '!' : 'Defeated the wild\n' + this.enemyDragon.species.name + '!';
+            this.showText(prefix + '\nGot ' + xp + ' XP!' + lvlMsg + dropMsg, BattlePhase.VICTORY);
             return;
         }
 
@@ -434,6 +502,10 @@ const BattleEngine = {
 
     updateVictory() {
         if (Input.confirm()) {
+            // Store trainer ID for post-battle processing
+            if (this.isTrainerBattle && this._currentTrainerId) {
+                this._defeatedTrainerId = this._currentTrainerId;
+            }
             this.endBattle();
         }
     },
@@ -454,6 +526,34 @@ const BattleEngine = {
     },
 
     endBattle() {
+        const postDialogue = this.trainerPostDialogue;
+        const trainerId = this._defeatedTrainerId;
+        this.isTrainerBattle = false;
+        this.trainerName = '';
+        this.trainerPostDialogue = null;
+        this.trainerParty = null;
+        this._defeatedTrainerId = null;
         Game.popState();
+
+        // Show post-battle dialogue and mark trainer as defeated
+        if (trainerId) {
+            Game.defeatedTrainers[trainerId] = true;
+        }
+        if (postDialogue) {
+            DialogueSystem.start(postDialogue);
+        }
+    },
+
+    _checkLevelUp() {
+        let lvlMsg = '';
+        while (this.playerDragon.xp >= this.playerDragon.xpToNext) {
+            this.playerDragon.xp -= this.playerDragon.xpToNext;
+            this.playerDragon.level++;
+            recalcStats(this.playerDragon);
+            this.playerDragon.xpToNext = Math.floor(50 * Math.pow(1.2, this.playerDragon.level - 1));
+            lvlMsg = '\n' + this.playerDragon.species.name + ' grew to\nlevel ' + this.playerDragon.level + '!';
+            GameAudio.sfx.levelUp();
+        }
+        return lvlMsg;
     }
 };

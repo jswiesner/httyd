@@ -185,7 +185,8 @@ const BattleRenderer = {
                 ctx.fillRect(x - 1, y - 1, cellW, cellH);
                 Sprites.drawText(ctx, '>', x, y + 2, COLORS.WHITE);
             }
-            Sprites.drawText(ctx, actions[i], x + 8, y + 2, COLORS.TEXT);
+            const dimmed = be.isTrainerBattle && (i === 1 || i === 3);
+            Sprites.drawText(ctx, actions[i], x + 8, y + 2, dimmed ? COLORS.GRAY : COLORS.TEXT);
         }
     },
 

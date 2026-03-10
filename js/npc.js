@@ -3,6 +3,7 @@ class NPC extends Entity {
         super(data.x, data.y, data.spriteId);
         this.id = data.id;
         this.dialogueId = data.dialogue;
+        this.trainerId = data.trainerId || null;
         this.direction = data.direction || DIR.DOWN;
     }
 
@@ -14,6 +15,16 @@ class NPC extends Entity {
         else if (px > this.gridX) this.direction = DIR.RIGHT;
         else if (py < this.gridY) this.direction = DIR.UP;
         else if (py > this.gridY) this.direction = DIR.DOWN;
+
+        // If trainer already defeated, show post-battle dialogue
+        if (this.trainerId && Game.defeatedTrainers[this.trainerId]) {
+            const postDialogue = DIALOGUES[this.dialogueId + '_defeated'];
+            if (postDialogue) {
+                GameAudio.sfx.confirm();
+                DialogueSystem.start(postDialogue);
+                return;
+            }
+        }
 
         // Start dialogue
         const dialogue = DIALOGUES[this.dialogueId];
@@ -90,5 +101,122 @@ const DIALOGUES = {
         { text: "In the sky, you can\nfly over trees and\nwater freely." },
         { text: "Look for cloud banks\nwhere rare dragons\nhide in the sky!" },
         { text: "Wind currents will\npush you along -\nuse them wisely!" },
+    ],
+
+    // Dragon Sanctuary Keeper
+    sanctuary_keeper: [
+        { text: "Welcome to the Dragon\nSanctuary stables!" },
+        { text: "I can look after your\nextra dragons while\nyou're adventuring." },
+        { action: 'openSanctuary' },
+    ],
+
+    // --- TRAINER DIALOGUES ---
+    trainer_snotlout: [
+        { text: "Hey! Think you're\ntough? My Nightmare\nwill crush you!" },
+        { action: { type: 'trainerBattle', trainer: {
+            id: 'snotlout', name: 'Snotlout',
+            party: [
+                { speciesId: 'monstrous_nightmare', level: 8 },
+            ],
+            postDialogue: [
+                { text: "No way! My Nightmare\nlost?! You got lucky!" },
+            ],
+        }}},
+    ],
+    trainer_snotlout_defeated: [
+        { text: "I'm still tougher\nthan you... I just\nlet you win!" },
+    ],
+
+    trainer_astrid: [
+        { text: "A true Viking must\nprove their strength\nin dragon combat!" },
+        { text: "My Nadder and I\nwon't hold back!" },
+        { action: { type: 'trainerBattle', trainer: {
+            id: 'astrid', name: 'Astrid',
+            party: [
+                { speciesId: 'deadly_nadder', level: 10 },
+                { speciesId: 'razorwhip', level: 9 },
+            ],
+            postDialogue: [
+                { text: "Impressive! You've\nearned my respect." },
+                { text: "Keep training hard.\nThe Dragon Sanctuary\nawaits the bravest!" },
+            ],
+        }}},
+    ],
+    trainer_astrid_defeated: [
+        { text: "You've proven your\nworth. Stay sharp\nout there!" },
+    ],
+
+    trainer_tuffnut: [
+        { text: "My Zippleback has\nTWO heads! That's\ntwice the trouble!" },
+        { action: { type: 'trainerBattle', trainer: {
+            id: 'tuffnut', name: 'Tuffnut',
+            party: [
+                { speciesId: 'hideous_zippleback', level: 7 },
+                { speciesId: 'terrible_terror', level: 6 },
+            ],
+            postDialogue: [
+                { text: "Aww man! Two heads\nand we still lost!" },
+            ],
+        }}},
+    ],
+    trainer_tuffnut_defeated: [
+        { text: "My Zippleback isn't\nfeeling well today.\nNo rematch!" },
+    ],
+
+    trainer_eret: [
+        { text: "I used to trap\ndragons for Drago.\nNow I train them." },
+        { text: "Let me show you\nwhat a real dragon\nmaster can do!" },
+        { action: { type: 'trainerBattle', trainer: {
+            id: 'eret', name: 'Eret',
+            party: [
+                { speciesId: 'gronckle', level: 12 },
+                { speciesId: 'monstrous_nightmare', level: 14 },
+            ],
+            postDialogue: [
+                { text: "Ha! Well fought!\nYou've got the heart\nof a true rider." },
+            ],
+        }}},
+    ],
+    trainer_eret_defeated: [
+        { text: "You're a natural.\nDrago himself would\nbe impressed!" },
+    ],
+
+    trainer_valka: [
+        { text: "I've lived among\ndragons for twenty\nyears..." },
+        { text: "My Stormcutter and\nI share a bond\ndeeper than words." },
+        { text: "Show me what your\ndragons can do!" },
+        { action: { type: 'trainerBattle', trainer: {
+            id: 'valka', name: 'Valka',
+            party: [
+                { speciesId: 'stormcutter', level: 16 },
+                { speciesId: 'fireworm', level: 14 },
+            ],
+            postDialogue: [
+                { text: "Remarkable! Your\nbond with your\ndragons is strong." },
+                { text: "You remind me of\nmy son, Hiccup.\nKeep going!" },
+            ],
+        }}},
+    ],
+    trainer_valka_defeated: [
+        { text: "The bond between\nyou and your dragons\ngrows stronger." },
+    ],
+
+    trainer_drago: [
+        { text: "So you dare face\nDrago Bludvist?" },
+        { text: "I am the Dragon\nGod! No one can\nstand against me!" },
+        { action: { type: 'trainerBattle', trainer: {
+            id: 'drago', name: 'Drago',
+            party: [
+                { speciesId: 'monstrous_nightmare', level: 18 },
+                { speciesId: 'night_fury', level: 20 },
+            ],
+            postDialogue: [
+                { text: "Impossible! My\ndragons... defeated?!" },
+                { text: "You are the true\nDragon Master.\nI yield." },
+            ],
+        }}},
+    ],
+    trainer_drago_defeated: [
+        { text: "...You have proven\nyourself. I will\nnot forget this." },
     ],
 };

@@ -340,10 +340,19 @@ const Game = {
         });
     },
 
+    defeatedTrainers: {},
+
     startBattle(wildDragon) {
         this.transition(() => {
             this.pushState(GameState.BATTLE);
             BattleEngine.start(wildDragon);
+        });
+    },
+
+    startTrainerBattle(trainerData) {
+        this.transition(() => {
+            this.pushState(GameState.BATTLE);
+            BattleEngine.startTrainer(trainerData);
         });
     },
 
@@ -421,6 +430,8 @@ const Game = {
             })),
             inventory: Inventory.items,
             collectedItems: Inventory.collectedItems,
+            sanctuary: Sanctuary.getSaveData(),
+            defeatedTrainers: this.defeatedTrainers,
         };
         localStorage.setItem('httyd_save', JSON.stringify(data));
         this.hasSave = true;
@@ -458,6 +469,16 @@ const Game = {
             }
             if (data.collectedItems) {
                 Inventory.collectedItems = data.collectedItems;
+            }
+
+            // Restore sanctuary
+            if (data.sanctuary) {
+                Sanctuary.loadSaveData(data.sanctuary);
+            }
+
+            // Restore defeated trainers
+            if (data.defeatedTrainers) {
+                this.defeatedTrainers = data.defeatedTrainers;
             }
 
             this.loadMap(data.map);

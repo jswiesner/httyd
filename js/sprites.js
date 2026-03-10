@@ -1454,6 +1454,9 @@ const Sprites = {
             npc_guide: {
                 P: { '.': null, 'h': '#c88830', 'H': '#a86820', 'S': '#deb887', 'A': '#2a5a8a', 'a': '#1a4a6a', 'B': '#8a6e3e', 'P': '#4a4a4a', 'p': '#2a2a2a', 'b': null },
             },
+            npc_trainer: {
+                P: { '.': null, 'h': '#2a2a2a', 'H': '#1a1a1a', 'S': '#deb887', 'A': '#8a2020', 'a': '#6a1010', 'B': '#c0c0c0', 'P': '#4a4a5a', 'p': '#2a2a3a', 'b': '#e8d040' },
+            },
         };
 
         const baseSprite =
