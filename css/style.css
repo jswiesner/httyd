@@ -17,17 +17,30 @@ body {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+    position: relative;
 }
 
 #game {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    width: 480px;
-    height: 576px;
+    width: 360px;
+    height: 640px;
     max-width: 100vw;
+    aspect-ratio: 180 / 320;
     border: 4px solid #333;
     border-radius: 4px;
     flex-shrink: 0;
+}
+
+#credit {
+    position: fixed;
+    bottom: 6px;
+    right: 8px;
+    color: rgba(255, 255, 255, 0.25);
+    font-family: monospace;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 10;
 }
 
 /* Desktop: center game, hide controls */
@@ -140,9 +153,11 @@ body {
 
     #game {
         width: 100vw;
-        height: calc(100vw * 1.2);
-        max-height: 55vh;
-        max-height: 55dvh;
+        max-width: 360px;
+        height: auto;
+        aspect-ratio: 180 / 320;
+        max-height: 65vh;
+        max-height: 65dvh;
         border: none;
         border-radius: 0;
     }

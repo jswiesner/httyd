@@ -22,12 +22,12 @@ const BattleRenderer = {
         ctx.fillStyle = '#98a8b8';
         ctx.beginPath();
         ctx.moveTo(0, groundY - 10);
-        ctx.lineTo(30, groundY - 25);
-        ctx.lineTo(65, groundY - 15);
-        ctx.lineTo(100, groundY - 30);
-        ctx.lineTo(140, groundY - 18);
-        ctx.lineTo(180, groundY - 28);
-        ctx.lineTo(210, groundY - 20);
+        ctx.lineTo(SCREEN_W * 0.15, groundY - 25);
+        ctx.lineTo(SCREEN_W * 0.30, groundY - 15);
+        ctx.lineTo(SCREEN_W * 0.48, groundY - 30);
+        ctx.lineTo(SCREEN_W * 0.65, groundY - 18);
+        ctx.lineTo(SCREEN_W * 0.82, groundY - 28);
+        ctx.lineTo(SCREEN_W * 0.92, groundY - 20);
         ctx.lineTo(SCREEN_W, groundY - 15);
         ctx.lineTo(SCREEN_W, groundY);
         ctx.lineTo(0, groundY);
