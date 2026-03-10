@@ -215,19 +215,25 @@ const Game = {
         // Update weather
         WeatherSystem.update(dt);
 
-        // Toggle flight mode with F key
+        // Toggle flight mode with F key (consume immediately to prevent double-toggle in multi-tick frames)
         if (wasF && wasStill) {
             this.player.toggleFlight();
+            Input.justPressed['f'] = false;
         }
 
         // Check for NPC interaction
         if (wasConfirm && wasStill) {
             this.player.tryInteract();
+            Input.justPressed['z'] = false;
+            Input.justPressed[' '] = false;
+            Input.justPressed['enter'] = false;
         }
 
         // Open menu
         if (wasCancel && wasStill) {
             MenuSystem.open();
+            Input.justPressed['x'] = false;
+            Input.justPressed['escape'] = false;
         }
     },
 
