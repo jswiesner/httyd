@@ -21,6 +21,8 @@ const DialogueSystem = {
         const page = this.pages[this.currentPage];
         if (page.action) {
             this.executeAction(page.action);
+            // If executeAction closed dialogue (e.g. openForge, openSanctuary, trainerBattle), don't advance
+            if (!this.active) return;
             this.advance();
             return;
         }
