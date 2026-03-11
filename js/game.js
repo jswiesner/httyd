@@ -46,11 +46,11 @@ const Game = {
 
         while (this.accumulator >= TICK_RATE) {
             this.update(TICK_RATE);
+            Input.consume();
             this.accumulator -= TICK_RATE;
         }
 
         this.render();
-        Input.consume();
         requestAnimationFrame(t => this.loop(t));
     },
 

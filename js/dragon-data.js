@@ -167,6 +167,31 @@ const DRAGON_SPECIES = {
     },
 };
 
+// Dragon nickname pools
+const DRAGON_NAMES = {
+    male: [
+        'Fang', 'Blaze', 'Cinder', 'Ash', 'Spike',
+        'Storm', 'Thor', 'Ragnar', 'Flint', 'Ember',
+        'Gust', 'Bolt', 'Rex', 'Drago', 'Sven',
+        'Odin', 'Loki', 'Fenrir', 'Bjorn', 'Axel',
+        'Frost', 'Magni', 'Baldr', 'Sigurd', 'Ivar',
+        'Soot', 'Char', 'Rumble', 'Voltar', 'Glacier',
+    ],
+    female: [
+        'Luna', 'Ivy', 'Ember', 'Freya', 'Stella',
+        'Aurora', 'Misty', 'Pearl', 'Saga', 'Hilda',
+        'Astrid', 'Brenna', 'Eira', 'Runa', 'Nyx',
+        'Solveig', 'Thyra', 'Ingrid', 'Sigrid', 'Ylva',
+        'Flare', 'Shimmer', 'Zephyr', 'Glimmer', 'Ember',
+        'Spark', 'Crest', 'Wisp', 'Drift', 'Nova',
+    ],
+};
+
+function getRandomDragonName(gender) {
+    const pool = DRAGON_NAMES[gender];
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
 // Helper to create a dragon instance at a given level
 function createDragonInstance(speciesId, level) {
     const species = DRAGON_SPECIES[speciesId];
@@ -181,9 +206,13 @@ function createDragonInstance(speciesId, level) {
         }
     }
 
+    const gender = Math.random() < 0.5 ? 'male' : 'female';
+
     return {
         speciesId: speciesId,
         species: species,
+        nickname: getRandomDragonName(gender),
+        gender: gender,
         level: level,
         currentHp: maxHp,
         maxHp: maxHp,
@@ -200,6 +229,11 @@ function createDragonInstance(speciesId, level) {
         xp: 0,
         xpToNext: Math.floor(50 * Math.pow(1.2, level - 1)),
     };
+}
+
+// Get display name for a dragon (nickname if available, else species name)
+function dragonName(dragon) {
+    return dragon.nickname || dragon.species.name;
 }
 
 // Recalculate stats for a level-up

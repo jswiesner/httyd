@@ -111,8 +111,7 @@ const BattleRenderer = {
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 
-        const species = DRAGON_SPECIES[dragon.speciesId];
-        Sprites.drawText(ctx, species.name, x + 2, y + 2, COLORS.TEXT);
+        Sprites.drawText(ctx, dragonName(dragon), x + 2, y + 2, COLORS.TEXT);
         Sprites.drawText(ctx, 'Lv' + dragon.level, x + w - 20, y + 2, COLORS.TEXT);
 
         const barX = x + 2;

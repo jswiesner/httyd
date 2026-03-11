@@ -30,7 +30,7 @@ const BattleEngine = {
         this.trainerParty = null;
         this.trainerPartyIndex = 0;
         this._initPlayerDragon();
-        this.showText('A wild ' + this.enemyDragon.species.name + ' appeared!', BattlePhase.MENU);
+        this.showText('A wild ' + dragonName(this.enemyDragon) + ' appeared!', BattlePhase.MENU);
     },
 
     startTrainer(trainerData) {
@@ -135,7 +135,7 @@ const BattleEngine = {
             if (Input.confirm()) {
                 if (this._trainerIntroQueued) {
                     this._trainerIntroQueued = false;
-                    this.showText(this.trainerName + ' sends out\n' + this.enemyDragon.species.name + '!', BattlePhase.MENU);
+                    this.showText(this.trainerName + ' sends out\n' + dragonName(this.enemyDragon) + '!', BattlePhase.MENU);
                     return;
                 }
                 this.phase = this._nextPhase;
@@ -178,7 +178,7 @@ const BattleEngine = {
                         if (Game.player.party[otherIdx].currentHp > 0) {
                             this.playerDragonIndex = otherIdx;
                             this.playerDragon = Game.player.party[this.playerDragonIndex];
-                            this.showText('Go, ' + this.playerDragon.species.name + '!', BattlePhase.ENEMY_TURN);
+                            this.showText('Go, ' + dragonName(this.playerDragon) + '!', BattlePhase.ENEMY_TURN);
                         } else {
                             this.showText('That dragon has\nno energy left!', BattlePhase.MENU);
                         }
@@ -244,10 +244,10 @@ const BattleEngine = {
             if (effectiveness > 1) extra = '\nIt\'s super effective!';
             else if (effectiveness < 1) extra = '\nNot very effective...';
             const skipEnemyTurn = this.turnOrder === 'enemy_first' || this.enemyDragon.currentHp <= 0;
-            this.showText(this.playerDragon.species.name + '\nused ' + moveData.name + '!' + extra,
+            this.showText(dragonName(this.playerDragon) + '\nused ' + moveData.name + '!' + extra,
                 skipEnemyTurn ? BattlePhase.CHECK : BattlePhase.ENEMY_TURN);
         } else {
-            this.showText(this.playerDragon.species.name + '\nused ' + moveData.name + '\nbut missed!',
+            this.showText(dragonName(this.playerDragon) + '\nused ' + moveData.name + '\nbut missed!',
                 this.turnOrder === 'enemy_first' ? BattlePhase.CHECK : BattlePhase.ENEMY_TURN);
         }
         this.turnOrder = null;
@@ -257,7 +257,7 @@ const BattleEngine = {
         // AI: pick a move
         const moves = this.enemyDragon.moves.filter(m => m.currentPp > 0);
         if (moves.length === 0) {
-            this.showText(this.enemyDragon.species.name + '\nhas no moves left!', BattlePhase.CHECK);
+            this.showText(dragonName(this.enemyDragon) + '\nhas no moves left!', BattlePhase.CHECK);
             return;
         }
 
@@ -279,10 +279,10 @@ const BattleEngine = {
             this.playerDragon.currentHp = Math.max(0, this.playerDragon.currentHp - damage);
             GameAudio.sfx.hit();
             const canPlayerAct = this.pendingPlayerMove && this.playerDragon.currentHp > 0;
-            this.showText('Wild ' + this.enemyDragon.species.name + '\nused ' + moveData.name + '!',
+            this.showText('Wild ' + dragonName(this.enemyDragon) + '\nused ' + moveData.name + '!',
                 canPlayerAct ? BattlePhase.PLAYER_TURN : BattlePhase.CHECK);
         } else {
-            this.showText('Wild ' + this.enemyDragon.species.name + '\nused ' + moveData.name + '\nbut missed!',
+            this.showText('Wild ' + dragonName(this.enemyDragon) + '\nused ' + moveData.name + '\nbut missed!',
                 this.pendingPlayerMove ? BattlePhase.PLAYER_TURN : BattlePhase.CHECK);
         }
         if (!this.pendingPlayerMove) {
@@ -329,7 +329,7 @@ const BattleEngine = {
         const baseTameChance = this.enemyDragon.species.tameDifficulty;
         const chance = baseTameChance * (1 - hpRatio * 0.7) * (1 + this.tameAttempts * 0.1);
 
-        this.showText('You attempt to\ntame the ' + this.enemyDragon.species.name + '...', BattlePhase.TAME_ATTEMPT);
+        this.showText('You attempt to\ntame the ' + dragonName(this.enemyDragon) + '...', BattlePhase.TAME_ATTEMPT);
         this._tameSuccess = Math.random() < chance;
         this.shakeCount = 0;
         this.shakeTimer = 0;
@@ -347,13 +347,13 @@ const BattleEngine = {
                     GameAudio.sfx.tameSuccess();
                     if (Game.player.party.length < MAX_PARTY) {
                         Game.player.addToParty(this.enemyDragon);
-                        this.showText('You tamed the\n' + this.enemyDragon.species.name + '!', BattlePhase.VICTORY);
+                        this.showText('You tamed the\n' + dragonName(this.enemyDragon) + '!', BattlePhase.VICTORY);
                     } else {
-                        this.showText('You tamed the\n' + this.enemyDragon.species.name + '!\nBut your party is full!', BattlePhase.PARTY_FULL);
+                        this.showText('You tamed the\n' + dragonName(this.enemyDragon) + '!\nBut your party is full!', BattlePhase.PARTY_FULL);
                     }
                 } else {
                     GameAudio.sfx.tameFail();
-                    this.showText('The ' + this.enemyDragon.species.name + '\nbroke free!', BattlePhase.ENEMY_TURN);
+                    this.showText('The ' + dragonName(this.enemyDragon) + '\nbroke free!', BattlePhase.ENEMY_TURN);
                     this.pendingPlayerMove = null;
                 }
             }
@@ -372,7 +372,7 @@ const BattleEngine = {
         this.currentText = 'Party full! What now?\n';
         const options = [];
         for (let i = 0; i < Game.player.party.length; i++) {
-            options.push('Release ' + Game.player.party[i].species.name);
+            options.push('Release ' + dragonName(Game.player.party[i]));
         }
         if (Sanctuary.stored.length < Sanctuary.maxStorage) {
             options.push('Send to Sanctuary');
@@ -406,15 +406,15 @@ const BattleEngine = {
                 Game.player.removeFromParty(this.releaseIndex);
                 Game.player.addToParty(this.enemyDragon);
                 GameAudio.sfx.confirm();
-                this.showText('Released ' + released.species.name + '.\n' + this.enemyDragon.species.name + '\njoined your party!', BattlePhase.VICTORY);
+                this.showText('Released ' + dragonName(released) + '.\n' + dragonName(this.enemyDragon) + '\njoined your party!', BattlePhase.VICTORY);
             } else if (this.releaseIndex === sanctuaryIdx) {
                 // Send tamed dragon to sanctuary
                 Sanctuary.storeDirectly(this.enemyDragon);
                 GameAudio.sfx.confirm();
-                this.showText(this.enemyDragon.species.name + ' was\nsent to the Dragon\nSanctuary!', BattlePhase.VICTORY);
+                this.showText(dragonName(this.enemyDragon) + ' was\nsent to the Dragon\nSanctuary!', BattlePhase.VICTORY);
             } else {
                 // Cancel
-                this.showText('You let the\n' + this.enemyDragon.species.name + ' go.', BattlePhase.VICTORY);
+                this.showText('You let the\n' + dragonName(this.enemyDragon) + ' go.', BattlePhase.VICTORY);
             }
             this.releaseIndex = -1;
         }
@@ -446,7 +446,7 @@ const BattleEngine = {
                     this._checkLevelUp();
                     // Send out next trainer dragon
                     this.enemyDragon = this.trainerParty[this.trainerPartyIndex];
-                    this.showText(this.trainerName + ' sends out\n' + this.enemyDragon.species.name + '!', BattlePhase.MENU);
+                    this.showText(this.trainerName + ' sends out\n' + dragonName(this.enemyDragon) + '!', BattlePhase.MENU);
                     return;
                 }
             }
@@ -468,7 +468,7 @@ const BattleEngine = {
                 }
             }
 
-            const prefix = this.isTrainerBattle ? 'Defeated ' + this.trainerName + '!' : 'Defeated the wild\n' + this.enemyDragon.species.name + '!';
+            const prefix = this.isTrainerBattle ? 'Defeated ' + this.trainerName + '!' : 'Defeated the wild\n' + dragonName(this.enemyDragon) + '!';
             this.showText(prefix + '\nGot ' + xp + ' XP!' + lvlMsg + dropMsg, BattlePhase.VICTORY);
             return;
         }
@@ -484,10 +484,10 @@ const BattleEngine = {
             }
 
             if (aliveIdx >= 0) {
-                const faintedName = this.playerDragon.species.name;
+                const faintedName = dragonName(this.playerDragon);
                 this.playerDragonIndex = aliveIdx;
                 this.playerDragon = Game.player.party[aliveIdx];
-                this.showText(faintedName + ' fainted!\nGo, ' + this.playerDragon.species.name + '!', BattlePhase.MENU);
+                this.showText(faintedName + ' fainted!\nGo, ' + dragonName(this.playerDragon) + '!', BattlePhase.MENU);
             } else {
                 GameAudio.sfx.defeat();
                 this.showText('All your dragons\nhave fainted!', BattlePhase.DEFEAT);
@@ -551,7 +551,7 @@ const BattleEngine = {
             this.playerDragon.level++;
             recalcStats(this.playerDragon);
             this.playerDragon.xpToNext = Math.floor(50 * Math.pow(1.2, this.playerDragon.level - 1));
-            lvlMsg = '\n' + this.playerDragon.species.name + ' grew to\nlevel ' + this.playerDragon.level + '!';
+            lvlMsg = '\n' + dragonName(this.playerDragon) + ' grew to\nlevel ' + this.playerDragon.level + '!';
             GameAudio.sfx.levelUp();
         }
         return lvlMsg;

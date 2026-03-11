@@ -222,7 +222,7 @@ const MenuSystem = {
                 this.equipMode = false;
                 this.subMenu = null;
                 DialogueSystem.start([
-                    { text: 'Equipped ' + SADDLES[selectedItem.saddleId].name + '\non ' + dragon.species.name + '!' }
+                    { text: 'Equipped ' + SADDLES[selectedItem.saddleId].name + '\non ' + dragonName(dragon) + '!' }
                 ]);
             }
         }
@@ -317,7 +317,13 @@ const MenuSystem = {
         Sprites.drawText(ctx, pageText, SCREEN_W - Sprites.textWidth(pageText) - 6, 7, COLORS.GRAY);
 
         // Dragon name
-        Sprites.drawText(ctx, species.name.toUpperCase(), 6, 7, COLORS.TEXT);
+        const nameStr = dragonName(dragon).toUpperCase();
+        Sprites.drawText(ctx, nameStr, 6, 7, COLORS.TEXT);
+        if (dragon.gender) {
+            const genderStr = dragon.gender === 'male' ? 'M' : 'F';
+            const genderColor = dragon.gender === 'male' ? '#6090e0' : '#e06090';
+            Sprites.drawText(ctx, genderStr, 6 + Sprites.textWidth(nameStr) + 3, 7, genderColor);
+        }
 
         ctx.fillStyle = COLORS.GRAY;
         ctx.fillRect(4, 16, SCREEN_W - 8, 1);
@@ -339,10 +345,13 @@ const MenuSystem = {
         const typeLabelX = 6 + Math.floor((44 - Sprites.textWidth(typeLabel)) / 2);
         Sprites.drawText(ctx, typeLabel, typeLabelX, 72, typeColor);
 
+        // Species name below type
+        Sprites.drawText(ctx, species.name, 6, 82, COLORS.GRAY);
+
         // Saddle indicator
         if (dragon.saddle) {
             const saddleName = SADDLES[dragon.saddle] ? SADDLES[dragon.saddle].name : 'Unknown';
-            Sprites.drawText(ctx, saddleName, 6, 82, '#e8d040');
+            Sprites.drawText(ctx, saddleName, 6, 92, '#e8d040');
         }
 
         // Stats panel
@@ -582,7 +591,7 @@ const MenuSystem = {
                 Sprites.drawText(ctx, '>', 6, y, COLORS.WHITE);
             }
 
-            Sprites.drawText(ctx, dragon.species.name, 16, y, COLORS.TEXT);
+            Sprites.drawText(ctx, dragonName(dragon), 16, y, COLORS.TEXT);
             Sprites.drawText(ctx, 'Lv' + dragon.level, 16, y + 10, COLORS.GRAY);
 
             if (dragon.saddle) {
@@ -742,7 +751,7 @@ const MenuSystem = {
                 ctx.fillStyle = typeColor;
                 ctx.fillRect(16, y + 3, 4, 4);
 
-                Sprites.drawText(ctx, dragon.species.name, 24, y + 2, COLORS.TEXT);
+                Sprites.drawText(ctx, dragonName(dragon), 24, y + 2, COLORS.TEXT);
                 Sprites.drawText(ctx, 'Lv' + dragon.level, SCREEN_W - 40, y + 2, COLORS.GRAY);
 
                 // Mini HP bar
