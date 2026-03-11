@@ -283,9 +283,13 @@ const MenuSystem = {
         for (let i = 0; i < this.menuItems.length; i++) {
             const y = menuY + 4 + i * 12;
             if (i === this.selectedItem) {
-                Sprites.drawText(ctx, '>', menuX + 4, y, COLORS.WHITE);
+                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                ctx.fillRect(menuX + 2, y - 1, menuW - 4, 11);
+                Sprites.drawText(ctx, '>', menuX + 4, y, '#e8a030');
+                Sprites.drawText(ctx, this.menuItems[i], menuX + 14, y, COLORS.WHITE);
+            } else {
+                Sprites.drawText(ctx, this.menuItems[i], menuX + 14, y, COLORS.GRAY);
             }
-            Sprites.drawText(ctx, this.menuItems[i], menuX + 14, y, COLORS.TEXT);
         }
     },
 
