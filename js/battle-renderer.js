@@ -140,7 +140,7 @@ const BattleRenderer = {
             ctx.fillRect(barX + 1, xpBarY + 1, Math.floor((barW - 2) * xpRatio), 1);
         }
 
-        const typeIcon = Sprites.get('type_' + species.type);
+        const typeIcon = Sprites.get('type_' + dragon.species.type);
         if (typeIcon) {
             ctx.drawImage(typeIcon, x + w - 10, y + 12);
         }
