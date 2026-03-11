@@ -4,6 +4,7 @@ const Tilesets = {
 
     init() {
         this.generateTiles();
+        this.generateInteriorTiles();
     },
 
     get(id) {
@@ -1339,6 +1340,280 @@ const Tilesets = {
             ctx.fillRect(3, 3, 1, 1);
             ctx.fillRect(11, 7, 1, 1);
             ctx.fillRect(7, 12, 1, 1);
+        });
+    },
+
+    // ══════════════════════════════════════════════════════
+    //  HOUSE INTERIOR TILES
+    // ══════════════════════════════════════════════════════
+
+    generateInteriorTiles() {
+        // ── WOOD FLOOR ───────────────────────────────────
+        this.makeTile('wood_floor', (ctx) => {
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#8a6a3a';
+            ctx.fillRect(0, 0, 16, 1);
+            ctx.fillRect(0, 8, 16, 1);
+            ctx.fillRect(7, 0, 1, 8);
+            ctx.fillRect(3, 8, 1, 8);
+            ctx.fillRect(11, 8, 1, 8);
+            ctx.fillStyle = '#aa8a5a';
+            ctx.fillRect(2, 3, 3, 1);
+            ctx.fillRect(10, 5, 2, 1);
+            ctx.fillRect(5, 11, 3, 1);
+            ctx.fillRect(13, 13, 2, 1);
+        });
+
+        // ── INTERIOR WALL ────────────────────────────────
+        this.makeTile('interior_wall', (ctx) => {
+            ctx.fillStyle = '#7a6040';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#6a5030';
+            for (let y = 0; y < 16; y += 4) ctx.fillRect(0, y, 16, 1);
+            ctx.fillRect(8, 0, 1, 16);
+            ctx.fillStyle = '#8a7050';
+            ctx.fillRect(2, 2, 2, 1);
+            ctx.fillRect(11, 6, 3, 1);
+            ctx.fillRect(4, 10, 2, 1);
+            ctx.fillRect(12, 14, 2, 1);
+        });
+
+        // ── TABLE ────────────────────────────────────────
+        this.makeTile('table', (ctx) => {
+            // Floor underneath
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#8a6a3a';
+            ctx.fillRect(0, 0, 16, 1);
+            // Table top
+            ctx.fillStyle = '#8a5a2a';
+            ctx.fillRect(1, 3, 14, 8);
+            ctx.fillStyle = '#7a4a1a';
+            ctx.fillRect(1, 3, 14, 1);
+            ctx.fillRect(1, 10, 14, 1);
+            // Wood grain
+            ctx.fillStyle = '#9a6a3a';
+            ctx.fillRect(3, 5, 4, 1);
+            ctx.fillRect(9, 7, 3, 1);
+            // Legs
+            ctx.fillStyle = '#6a3a10';
+            ctx.fillRect(2, 11, 2, 5);
+            ctx.fillRect(12, 11, 2, 5);
+        });
+
+        // ── BED ──────────────────────────────────────────
+        this.makeTile('bed', (ctx) => {
+            // Floor
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            // Bed frame
+            ctx.fillStyle = '#6a3a10';
+            ctx.fillRect(1, 2, 14, 13);
+            // Mattress
+            ctx.fillStyle = '#c8b898';
+            ctx.fillRect(2, 3, 12, 11);
+            // Pillow
+            ctx.fillStyle = '#e0d0b8';
+            ctx.fillRect(3, 3, 10, 4);
+            ctx.fillStyle = '#d0c0a8';
+            ctx.fillRect(3, 3, 10, 1);
+            // Blanket
+            ctx.fillStyle = '#5a7aaa';
+            ctx.fillRect(2, 8, 12, 6);
+            ctx.fillStyle = '#4a6a9a';
+            ctx.fillRect(2, 8, 12, 1);
+            ctx.fillRect(2, 12, 12, 1);
+            // Blanket pattern
+            ctx.fillStyle = '#6a8aba';
+            ctx.fillRect(4, 10, 3, 1);
+            ctx.fillRect(9, 10, 3, 1);
+        });
+
+        // ── FIREPLACE ────────────────────────────────────
+        this.makeTile('fireplace', (ctx) => {
+            // Wall background
+            ctx.fillStyle = '#7a6040';
+            ctx.fillRect(0, 0, 16, 16);
+            // Stone hearth
+            ctx.fillStyle = '#6a6a6a';
+            ctx.fillRect(1, 3, 14, 13);
+            ctx.fillStyle = '#5a5a5a';
+            ctx.fillRect(1, 3, 14, 2);
+            ctx.fillRect(1, 3, 2, 13);
+            ctx.fillRect(13, 3, 2, 13);
+            // Fire opening
+            ctx.fillStyle = '#2a1a0a';
+            ctx.fillRect(3, 5, 10, 11);
+            // Fire glow
+            ctx.fillStyle = '#e08020';
+            ctx.fillRect(5, 10, 6, 4);
+            ctx.fillStyle = '#f0a030';
+            ctx.fillRect(6, 8, 4, 4);
+            ctx.fillStyle = '#f0c040';
+            ctx.fillRect(7, 9, 2, 2);
+            // Embers
+            ctx.fillStyle = '#e06010';
+            ctx.fillRect(4, 14, 8, 2);
+            ctx.fillRect(5, 13, 2, 1);
+            ctx.fillRect(9, 13, 2, 1);
+        });
+
+        // ── SHELF ────────────────────────────────────────
+        this.makeTile('shelf', (ctx) => {
+            // Wall background
+            ctx.fillStyle = '#7a6040';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#6a5030';
+            for (let y = 0; y < 16; y += 4) ctx.fillRect(0, y, 16, 1);
+            // Shelf boards
+            ctx.fillStyle = '#8a5a2a';
+            ctx.fillRect(1, 5, 14, 2);
+            ctx.fillRect(1, 11, 14, 2);
+            // Items on top shelf
+            ctx.fillStyle = '#4a8a4a';
+            ctx.fillRect(3, 2, 3, 3); // bottle
+            ctx.fillStyle = '#3a7a3a';
+            ctx.fillRect(4, 1, 1, 1); // bottle neck
+            ctx.fillStyle = '#aa6a3a';
+            ctx.fillRect(8, 3, 4, 2); // book
+            ctx.fillStyle = '#8a4a2a';
+            ctx.fillRect(8, 2, 4, 1);
+            // Items on bottom shelf
+            ctx.fillStyle = '#c89030';
+            ctx.fillRect(2, 8, 3, 3); // jar
+            ctx.fillStyle = '#aa7020';
+            ctx.fillRect(2, 8, 3, 1);
+            ctx.fillStyle = '#7070a0';
+            ctx.fillRect(9, 9, 2, 2); // small box
+            ctx.fillRect(12, 8, 2, 3);
+        });
+
+        // ── RUG ──────────────────────────────────────────
+        this.makeTile('rug', (ctx) => {
+            // Floor
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            // Rug
+            ctx.fillStyle = '#8a3030';
+            ctx.fillRect(1, 1, 14, 14);
+            ctx.fillStyle = '#aa4040';
+            ctx.fillRect(2, 2, 12, 12);
+            // Border pattern
+            ctx.fillStyle = '#c89030';
+            ctx.fillRect(2, 2, 12, 1);
+            ctx.fillRect(2, 13, 12, 1);
+            ctx.fillRect(2, 2, 1, 12);
+            ctx.fillRect(13, 2, 1, 12);
+            // Center diamond
+            ctx.fillStyle = '#c89030';
+            ctx.fillRect(7, 5, 2, 6);
+            ctx.fillRect(6, 6, 4, 4);
+            ctx.fillRect(5, 7, 6, 2);
+        });
+
+        // ── CHEST ────────────────────────────────────────
+        this.makeTile('chest', (ctx) => {
+            // Floor
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            // Chest body
+            ctx.fillStyle = '#7a4a1a';
+            ctx.fillRect(2, 5, 12, 9);
+            ctx.fillStyle = '#6a3a10';
+            ctx.fillRect(2, 5, 12, 1);
+            // Lid (slightly rounded top)
+            ctx.fillStyle = '#8a5a2a';
+            ctx.fillRect(2, 3, 12, 3);
+            ctx.fillStyle = '#7a4a1a';
+            ctx.fillRect(3, 2, 10, 1);
+            // Metal bands
+            ctx.fillStyle = '#5a5a6a';
+            ctx.fillRect(2, 6, 12, 1);
+            ctx.fillRect(2, 10, 12, 1);
+            // Lock
+            ctx.fillStyle = '#c8a030';
+            ctx.fillRect(7, 6, 2, 3);
+            ctx.fillStyle = '#a08020';
+            ctx.fillRect(7, 8, 2, 1);
+        });
+
+        // ── EXIT MAT (door back to outside) ──────────────
+        this.makeTile('exit_mat', (ctx) => {
+            // Floor
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#8a6a3a';
+            ctx.fillRect(0, 0, 16, 1);
+            // Mat
+            ctx.fillStyle = '#6a5a3a';
+            ctx.fillRect(2, 4, 12, 8);
+            ctx.fillStyle = '#7a6a4a';
+            ctx.fillRect(3, 5, 10, 6);
+            // Arrow down hint
+            ctx.fillStyle = '#9a8a5a';
+            ctx.fillRect(7, 6, 2, 3);
+            ctx.fillRect(6, 8, 4, 1);
+            ctx.fillRect(5, 9, 6, 1);
+        });
+
+        // ── WEAPON RACK ──────────────────────────────────
+        this.makeTile('weapon_rack', (ctx) => {
+            // Wall background
+            ctx.fillStyle = '#7a6040';
+            ctx.fillRect(0, 0, 16, 16);
+            ctx.fillStyle = '#6a5030';
+            for (let y = 0; y < 16; y += 4) ctx.fillRect(0, y, 16, 1);
+            // Rack board
+            ctx.fillStyle = '#6a3a10';
+            ctx.fillRect(1, 5, 14, 2);
+            ctx.fillRect(1, 11, 14, 2);
+            // Axe
+            ctx.fillStyle = '#8a8a9a';
+            ctx.fillRect(3, 1, 1, 4);
+            ctx.fillRect(2, 1, 3, 2);
+            ctx.fillStyle = '#6a3a10';
+            ctx.fillRect(3, 5, 1, 6);
+            // Sword
+            ctx.fillStyle = '#a0a0b0';
+            ctx.fillRect(8, 1, 1, 10);
+            ctx.fillRect(7, 2, 3, 1);
+            ctx.fillStyle = '#c8a030';
+            ctx.fillRect(7, 7, 3, 1);
+            ctx.fillStyle = '#6a3a10';
+            ctx.fillRect(8, 8, 1, 3);
+            // Shield on bottom
+            ctx.fillStyle = '#5a5a6a';
+            ctx.fillRect(11, 6, 4, 5);
+            ctx.fillStyle = '#6a6a7a';
+            ctx.fillRect(12, 7, 2, 3);
+            ctx.fillStyle = '#c89030';
+            ctx.fillRect(12, 8, 2, 1);
+        });
+
+        // ── ANVIL (for forge interior) ───────────────────
+        this.makeTile('anvil', (ctx) => {
+            // Floor
+            ctx.fillStyle = '#9a7a4a';
+            ctx.fillRect(0, 0, 16, 16);
+            // Base
+            ctx.fillStyle = '#4a4a5a';
+            ctx.fillRect(4, 12, 8, 4);
+            // Stem
+            ctx.fillStyle = '#5a5a6a';
+            ctx.fillRect(6, 7, 4, 5);
+            // Anvil top
+            ctx.fillStyle = '#6a6a7a';
+            ctx.fillRect(2, 4, 12, 4);
+            ctx.fillStyle = '#7a7a8a';
+            ctx.fillRect(3, 3, 10, 2);
+            // Horn
+            ctx.fillStyle = '#6a6a7a';
+            ctx.fillRect(1, 5, 2, 2);
+            ctx.fillRect(0, 5, 1, 1);
+            // Highlight
+            ctx.fillStyle = '#8a8a9a';
+            ctx.fillRect(4, 4, 6, 1);
         });
     },
 

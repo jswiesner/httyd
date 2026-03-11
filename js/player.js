@@ -80,8 +80,8 @@ class Player extends Entity {
         // Check for warps
         for (const warp of map.warps) {
             if (this.gridX === warp.x && this.gridY === warp.y) {
-                // Check if warp requires flight
                 if (warp.flightOnly && !this.isFlying) continue;
+                if (warp.groundOnly && this.isFlying) continue;
                 Game.warpTo(warp.targetMap, warp.targetX, warp.targetY);
                 return;
             }

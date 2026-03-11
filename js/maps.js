@@ -40,6 +40,18 @@ const TILE_LOOKUP = {
     '<': { ground: 'wind_left', collision: TILE.WIND_LEFT },
     '>': { ground: 'wind_right', collision: TILE.WIND_RIGHT },
     'I': { ground: 'sky_grass', collision: TILE.WALKABLE },
+    // Interior tiles
+    'o': { ground: 'wood_floor', collision: TILE.WALKABLE },
+    'i': { ground: 'interior_wall', collision: TILE.SOLID },
+    'b': { ground: 'bed', collision: TILE.SOLID },
+    'a': { ground: 'table', collision: TILE.SOLID },
+    'r': { ground: 'rug', collision: TILE.WALKABLE },
+    'h': { ground: 'fireplace', collision: TILE.SOLID },
+    'l': { ground: 'shelf', collision: TILE.SOLID },
+    'X': { ground: 'chest', collision: TILE.SOLID },
+    'e': { ground: 'exit_mat', collision: TILE.WALKABLE },
+    'J': { ground: 'anvil', collision: TILE.SOLID },
+    'q': { ground: 'weapon_rack', collision: TILE.SOLID },
 };
 
 function parseMap(mapStr, width) {
@@ -71,7 +83,7 @@ MAP_DATA.berk_village = (() => {
         'ggRRRggkkkkkkkggHHHggHHHgggggHHHggggggTT' +
         'ggHHHggkkkkkkkggHDHggHDHgggggHDHgggggggg' +
         'ggHDHggkkkkkkkggpppggpppppppppppgggggggg' +
-        'ggpppggkkkkkkkggpppggggpppppppppgggRRRgg' +
+        'ggpppggkkkkkkkggpppggggpppppppppggggRRRg' +
         'ggpppggkkkkkkkggpppggggppgggggppggggHHHg' +
         'ggpppggkkkkkkkggpppggggppgggggppggggHDHg' +
         'ggpppggkkkkkkkggpppggggppggGGgppggggpppg' +
@@ -102,13 +114,11 @@ MAP_DATA.berk_village = (() => {
         encounterRate: 0,
         encounters: [],
         npcs: [
-            { id: 'stoick', x: 18, y: 7, spriteId: 'npc_chief', dialogue: 'stoick_intro', direction: DIR.DOWN },
-            { id: 'healer', x: 3, y: 7, spriteId: 'npc_healer', dialogue: 'healer_talk', direction: DIR.DOWN },
+            // Stoick, Healer, Gobber moved inside their houses
             { id: 'trader', x: 27, y: 10, spriteId: 'npc_trader', dialogue: 'trader_talk', direction: DIR.LEFT },
             { id: 'elder', x: 14, y: 17, spriteId: 'npc_elder', dialogue: 'elder_talk', direction: DIR.DOWN },
             { id: 'child', x: 30, y: 13, spriteId: 'npc_guide', dialogue: 'berk_child', direction: DIR.LEFT },
             { id: 'fisherman', x: 10, y: 8, spriteId: 'npc_trader', dialogue: 'dock_fisherman', direction: DIR.RIGHT },
-            { id: 'gobber', x: 27, y: 17, spriteId: 'npc_chief', dialogue: 'gobber_forge', direction: DIR.DOWN },
             { id: 'flight_tutor', x: 24, y: 7, spriteId: 'npc_guide', dialogue: 'flight_tutorial', direction: DIR.LEFT },
             { id: 'sanctuary_keeper', x: 34, y: 18, spriteId: 'npc_elder', dialogue: 'sanctuary_keeper', direction: DIR.LEFT },
             { id: 'snotlout', x: 35, y: 13, spriteId: 'npc_trainer', dialogue: 'trainer_snotlout', trainerId: 'snotlout', direction: DIR.DOWN },
@@ -121,6 +131,10 @@ MAP_DATA.berk_village = (() => {
             // Sky Islands flight warp - top edge of map
             { x: 14, y: 0, targetMap: 'sky_islands', targetX: 14, targetY: 23, flightOnly: true },
             { x: 15, y: 0, targetMap: 'sky_islands', targetX: 15, targetY: 23, flightOnly: true },
+            // House doors
+            { x: 17, y: 5, targetMap: 'stoick_house', targetX: 3, targetY: 6, groundOnly: true },
+            { x: 3, y: 6, targetMap: 'healer_house', targetX: 3, targetY: 6, groundOnly: true },
+            { x: 8, y: 17, targetMap: 'gobber_forge', targetX: 3, targetY: 6, groundOnly: true },
         ],
         playerStart: { x: 18, y: 13 },
     };
@@ -525,6 +539,87 @@ MAP_DATA.sky_islands = (() => {
     };
 })();
 
+// --- STOICK'S HOUSE (8x8) ---
+MAP_DATA.stoick_house = (() => {
+    const m = parseMap(
+        'iihliiii' +
+        'iooooooi' +
+        'iboorooi' +
+        'iboorool' +
+        'iooooooi' +
+        'ioaoXooi' +
+        'iooooooi' +
+        'iiieiii i',
+        8
+    );
+    return {
+        ...m,
+        name: "Stoick's House",
+        encounterRate: 0,
+        encounters: [],
+        npcs: [
+            { id: 'stoick', x: 4, y: 3, spriteId: 'npc_chief', dialogue: 'stoick_intro', direction: DIR.DOWN },
+        ],
+        warps: [
+            { x: 3, y: 7, targetMap: 'berk_village', targetX: 17, targetY: 6 },
+        ],
+    };
+})();
+
+// --- HEALER'S CABIN (8x8) ---
+MAP_DATA.healer_house = (() => {
+    const m = parseMap(
+        'iilhliqi' +
+        'iooooooi' +
+        'ioorooci' +
+        'iooooooi' +
+        'ibooaooi' +
+        'ibooaooi' +
+        'iooooooi' +
+        'iiieiii i',
+        8
+    );
+    return {
+        ...m,
+        name: "Healer's Cabin",
+        encounterRate: 0,
+        encounters: [],
+        npcs: [
+            { id: 'healer', x: 4, y: 2, spriteId: 'npc_healer', dialogue: 'healer_talk', direction: DIR.DOWN },
+        ],
+        warps: [
+            { x: 3, y: 7, targetMap: 'berk_village', targetX: 3, targetY: 7 },
+        ],
+    };
+})();
+
+// --- GOBBER'S FORGE (8x8) ---
+MAP_DATA.gobber_forge = (() => {
+    const m = parseMap(
+        'iiqqhqqi' +
+        'iooooooi' +
+        'iJoooJoi' +
+        'iooooooi' +
+        'iooaoooi' +
+        'ioooooXi' +
+        'iooooooi' +
+        'iiieiii i',
+        8
+    );
+    return {
+        ...m,
+        name: "Gobber's Forge",
+        encounterRate: 0,
+        encounters: [],
+        npcs: [
+            { id: 'gobber', x: 4, y: 3, spriteId: 'npc_chief', dialogue: 'gobber_forge', direction: DIR.DOWN },
+        ],
+        warps: [
+            { x: 3, y: 7, targetMap: 'berk_village', targetX: 8, targetY: 18 },
+        ],
+    };
+})();
+
 // Add weather and sky data to existing maps
 MAP_DATA.berk_village.weather = Weather.CLEAR;
 MAP_DATA.berk_village.skyWarp = { targetMap: 'sky_islands', targetX: 14, targetY: 24 };
@@ -535,6 +630,9 @@ MAP_DATA.volcanic_caves.weather = Weather.CLEAR;
 MAP_DATA.hidden_world.weather = Weather.FOG;
 MAP_DATA.dragon_island.weather = Weather.CLEAR;
 MAP_DATA.dragon_sanctuary.weather = Weather.CLEAR;
+MAP_DATA.stoick_house.weather = Weather.CLEAR;
+MAP_DATA.healer_house.weather = Weather.CLEAR;
+MAP_DATA.gobber_forge.weather = Weather.CLEAR;
 
 // Item drops from maps (materials found on ground)
 MAP_DATA.volcanic_caves.groundItems = [

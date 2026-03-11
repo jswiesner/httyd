@@ -350,6 +350,12 @@ const Game = {
             this.player.setPosition(x, y);
             this.player.moveHistory = [{ x: x, y: y, dir: this.player.direction }];
             CompanionSystem.snapAll(this.player);
+            // Land when entering indoor maps
+            if (this.player.isFlying) {
+                this.player.isFlying = false;
+                this.player.moveSpeed = 0.13;
+                this.player.flightBobTimer = 0;
+            }
             this.camera.snap(this.player, this.currentMap.width, this.currentMap.height);
             this.state = GameState.OVERWORLD;
         });
